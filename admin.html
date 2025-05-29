@@ -4,30 +4,51 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Admin Panel</title>
+
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-100 min-h-screen p-6">
 
-  <!-- Navbar -->
-  <nav class="bg-blue-600 text-white p-4 flex justify-between items-center shadow">
-    <h1 class="text-xl font-bold">Admin Panel</h1>
-    <button id="logoutBtn" class="bg-red-500 px-4 py-2 rounded hover:bg-red-600">Logout</button>
-  </nav>
+  <h1 class="text-3xl font-bold mb-6 text-center">Admin Panel</h1>
 
-  <!-- Main Content -->
-  <main class="p-6">
-    <div id="adminContent" class="hidden bg-white p-6 rounded shadow-md">
-      <h2 class="text-2xl font-semibold mb-4">Welcome, Admin!</h2>
-      <p class="text-gray-700">You have access to manage users.</p>
-      <!-- Admin tools go here -->
+  <div id="loading" class="text-center text-lg">Loading...</div>
+
+  <div id="adminContent" class="max-w-4xl mx-auto hidden">
+
+    <button id="logoutBtn" class="mb-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+      Logout
+    </button>
+
+    <h2 class="text-xl font-semibold mb-3">Users List</h2>
+    <div id="userList" class="space-y-2 max-h-96 overflow-y-auto border p-4 rounded bg-white"></div>
+
+    <div id="editSection" class="mt-6 p-4 bg-white rounded shadow hidden max-w-md mx-auto">
+      <h3 class="text-lg font-semibold mb-4">Edit User</h3>
+
+      <label class="block mb-2">
+        Email:
+        <input id="editEmail" type="email" class="w-full px-3 py-2 border rounded" />
+      </label>
+
+      <label class="block mb-4">
+        Balance:
+        <input id="editBalance" type="number" class="w-full px-3 py-2 border rounded" />
+      </label>
+
+      <button onclick="updateUser()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        Update User
+      </button>
     </div>
-  </main>
+
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+    // তোমার Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
       authDomain: "bdwork-346d3.firebaseapp.com",
@@ -42,38 +63,88 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    const loadingEl = document.getElementById("loading");
+    const adminContentEl = document.getElementById("adminContent");
+    const userListEl = document.getElementById("userList");
+    const editSectionEl = document.getElementById("editSection");
+    const editEmailInput = document.getElementById("editEmail");
+    const editBalanceInput = document.getElementById("editBalance");
     const logoutBtn = document.getElementById("logoutBtn");
-    const adminContent = document.getElementById("adminContent");
+
+    let selectedUserDocId = null;
+
+    logoutBtn.onclick = () => {
+      signOut(auth);
+    };
 
     onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        window.location.href = "/";
-        return;
-      }
+      if (user) {
+        // শুধু এই ইমেইলকে অ্যাডমিন ধরা হবে, চাইলে পরিবর্তন করতে পারো
+        if (user.email !== "admin@example.com") {
+          alert("You are not authorized to access this page.");
+          await signOut(auth);
+          window.location.href = "login.html";
+          return;
+        }
 
-      const docRef = doc(db, "users", user.uid);
-      const docSnap = await getDoc(docRef);
+        loadingEl.style.display = "none";
+        adminContentEl.classList.remove("hidden");
 
-      if (!docSnap.exists()) {
-        alert("User data not found.");
-        window.location.href = "/";
-        return;
-      }
+        loadUsers();
 
-      const userData = docSnap.data();
-      if (userData.role === "admin") {
-        adminContent.classList.remove("hidden");
       } else {
-        alert("Access denied. Admins only.");
-        window.location.href = "/";
+        window.location.href = "login.html";
       }
     });
 
-    logoutBtn.addEventListener("click", () => {
-      signOut(auth).then(() => {
-        window.location.href = "/";
+    async function loadUsers() {
+      userListEl.innerHTML = "Loading users...";
+      const usersCol = collection(db, "users");
+      const usersSnapshot = await getDocs(usersCol);
+      userListEl.innerHTML = "";
+
+      usersSnapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const div = document.createElement("div");
+        div.className = "p-3 border rounded cursor-pointer hover:bg-gray-50 flex justify-between items-center";
+        div.textContent = `${data.email} (Balance: $${data.balance || 0})`;
+
+        div.onclick = () => {
+          showUserDetails(docSnap.id, data);
+        };
+
+        userListEl.appendChild(div);
       });
-    });
+    }
+
+    function showUserDetails(docId, data) {
+      selectedUserDocId = docId;
+      editEmailInput.value = data.email || "";
+      editBalanceInput.value = data.balance || 0;
+      editSectionEl.classList.remove("hidden");
+      editEmailInput.focus();
+    }
+
+    async function updateUser() {
+      if (!selectedUserDocId) return alert("No user selected");
+
+      const newEmail = editEmailInput.value.trim();
+      const newBalance = Number(editBalanceInput.value);
+
+      if (!newEmail) return alert("Email can't be empty");
+      if (isNaN(newBalance)) return alert("Balance must be a number");
+
+      const userDocRef = doc(db, "users", selectedUserDocId);
+      await updateDoc(userDocRef, {
+        email: newEmail,
+        balance: newBalance
+      });
+
+      alert("User updated successfully!");
+      editSectionEl.classList.add("hidden");
+      loadUsers();
+    }
   </script>
+
 </body>
 </html>
