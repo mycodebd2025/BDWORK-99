@@ -11,7 +11,7 @@
   <!-- Navbar -->
   <nav class="bg-blue-600 text-white p-4 flex justify-between items-center shadow">
     <h1 class="text-xl font-bold">Dashboard</h1>
-    <button onclick="logout()" class="bg-red-500 px-4 py-2 rounded hover:bg-red-600">Logout</button>
+    <button id="logoutBtn" class="bg-red-500 px-4 py-2 rounded hover:bg-red-600">Logout</button>
   </nav>
 
   <!-- Main Content -->
@@ -22,10 +22,9 @@
     </div>
   </main>
 
-  <!-- Firebase Logout Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
@@ -37,19 +36,27 @@
       measurementId: "G-FM1YJ8E5GK"
     };
 
+    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    function logout() {
-      signOut(auth)
-        .then(() => {
-          alert("Logged out successfully.");
-          window.location.href = "index.html"; // Go back to login page
-        })
-        .catch((error) => {
-          alert("Logout Failed: " + error.message);
-        });
-    }
+    // Redirect to login if not logged in
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        // Not logged in, redirect to login page
+        window.location.href = "/";
+      }
+    });
+
+    // Logout button handler
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      signOut(auth).then(() => {
+        alert("Logged out successfully.");
+        window.location.href = "/";
+      }).catch((error) => {
+        alert("Logout Failed: " + error.message);
+      });
+    });
   </script>
 </body>
 </html>
