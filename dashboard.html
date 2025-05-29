@@ -4,25 +4,28 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Dashboard</title>
-
-  <!-- TailwindCSS + FontAwesome -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+<body class="bg-gray-100 min-h-screen">
 
-  <div class="bg-white shadow-lg rounded-xl p-6 max-w-md w-full space-y-6 text-center">
-    <h1 class="text-2xl font-bold">Welcome to the Dashboard</h1>
-    <p id="userEmail" class="text-gray-700">Loading user info...</p>
-    <button id="logoutBtn" class="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
-      <i class="fa fa-sign-out-alt mr-2"></i>Logout
-    </button>
-  </div>
+  <!-- Navbar -->
+  <nav class="bg-blue-600 text-white p-4 flex justify-between items-center shadow">
+    <h1 class="text-xl font-bold">Dashboard</h1>
+    <button onclick="logout()" class="bg-red-500 px-4 py-2 rounded hover:bg-red-600">Logout</button>
+  </nav>
 
-  <!-- Firebase Scripts -->
+  <!-- Main Content -->
+  <main class="p-6">
+    <div class="bg-white p-6 rounded shadow-md">
+      <h2 class="text-2xl font-semibold mb-4">Welcome to your Dashboard!</h2>
+      <p class="text-gray-700">You have successfully logged in using Firebase Authentication.</p>
+    </div>
+  </main>
+
+  <!-- Firebase Logout Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
@@ -34,26 +37,19 @@
       measurementId: "G-FM1YJ8E5GK"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // Show user info
-    const userEmail = document.getElementById("userEmail");
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        userEmail.textContent = `Logged in as: ${user.email}`;
-      } else {
-        window.location.href = "/"; // Redirect to login if not logged in
-      }
-    });
-
-    // Logout handler
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      signOut(auth).then(() => {
-        window.location.href = "index.html"; // Redirect to login after logout
-      });
-    });
+    function logout() {
+      signOut(auth)
+        .then(() => {
+          alert("Logged out successfully.");
+          window.location.href = "/"; // Go back to login page
+        })
+        .catch((error) => {
+          alert("Logout Failed: " + error.message);
+        });
+    }
   </script>
 </body>
 </html>
