@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" >
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -8,15 +8,19 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
   <div class="w-full max-w-md bg-white p-6 rounded-xl shadow-lg space-y-6">
+
     <!-- Login Form -->
     <form id="loginForm" class="space-y-4">
       <h2 class="text-2xl font-bold text-center">Login</h2>
       <input type="email" id="loginEmail" placeholder="Email" required class="w-full p-2 border rounded" />
+      
       <div class="relative">
         <input type="password" id="loginPassword" placeholder="Password" required class="w-full p-2 border rounded pr-10" />
-        <i class="fa fa-eye absolute right-3 top-3 text-gray-500 cursor-pointer" onclick="togglePassword('loginPassword', this)"></i>
+        <i class="fa fa-eye absolute right-3 top-3 text-gray-500 cursor-pointer" onclick="togglePassword('loginPassword', this)" title="Show/Hide Password"></i>
       </div>
+
       <p id="loginError" class="text-sm text-red-500"></p>
       <button type="submit" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Login</button>
     </form>
@@ -27,10 +31,12 @@
     <form id="signupForm" class="space-y-4">
       <h2 class="text-2xl font-bold text-center">Sign Up</h2>
       <input type="email" id="signupEmail" placeholder="Email" required class="w-full p-2 border rounded" />
+
       <div class="relative">
         <input type="password" id="signupPassword" placeholder="Password" required class="w-full p-2 border rounded pr-10" />
-        <i class="fa fa-eye absolute right-3 top-3 text-gray-500 cursor-pointer" onclick="togglePassword('signupPassword', this)"></i>
+        <i class="fa fa-eye absolute right-3 top-3 text-gray-500 cursor-pointer" onclick="togglePassword('signupPassword', this)" title="Show/Hide Password"></i>
       </div>
+
       <p id="signupError" class="text-sm text-red-500"></p>
       <button type="submit" class="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600">Sign Up</button>
     </form>
@@ -39,7 +45,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
@@ -55,13 +61,21 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // Toggle password visibility
     window.togglePassword = function(fieldId, icon) {
       const field = document.getElementById(fieldId);
-      field.type = field.type === "password" ? "text" : "password";
-      icon.classList.toggle("fa-eye");
-      icon.classList.toggle("fa-eye-slash");
+      if (field.type === "password") {
+        field.type = "text";
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash");
+      } else {
+        field.type = "password";
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye");
+      }
     };
 
+    // Login Handler
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const email = document.getElementById("loginEmail").value.trim();
@@ -69,23 +83,16 @@
       const loginError = document.getElementById("loginError");
 
       try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        const role = userDoc.data()?.role;
-
+        await signInWithEmailAndPassword(auth, email, password);
         loginError.textContent = "";
-
-        if (role === "admin") {
-          window.location.href = "/admin.html";
-        } else {
-          window.location.href = "/dashboard.html";
-        }
+        alert("Login Successful!");
+        window.location.href = "/dashboard.html";
       } catch (error) {
         loginError.textContent = "Login Failed: " + error.message;
       }
     });
 
+    // Sign-Up Handler with role "user"
     document.getElementById("signupForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const email = document.getElementById("signupEmail").value.trim();
@@ -93,18 +100,21 @@
       const signupError = document.getElementById("signupError");
 
       try {
+        // Create user in Firebase Auth
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
+        // Add user document in Firestore with role = 'user'
         await setDoc(doc(db, "users", user.uid), {
           email: email,
           role: "user",
+          balance: 0.00,
           createdAt: new Date().toISOString()
         });
 
         signupError.textContent = "";
         alert("Account Created Successfully!");
-        window.location.href = "/dashboard.html";
+        window.location.href = "/welcome.html";
       } catch (error) {
         signupError.textContent = "Sign Up Failed: " + error.message;
       }
