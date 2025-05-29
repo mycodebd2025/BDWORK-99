@@ -1,17 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" >
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Login & Sign Up</title>
-
-  <!-- TailwindCSS + FontAwesome -->
+  <title>Login & Sign Up with Role</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
   <div class="w-full max-w-md bg-white p-6 rounded-xl shadow-lg space-y-6">
+
     <!-- Login Form -->
     <form id="loginForm" class="space-y-4">
       <h2 class="text-2xl font-bold text-center">Login</h2>
@@ -19,7 +18,7 @@
       
       <div class="relative">
         <input type="password" id="loginPassword" placeholder="Password" required class="w-full p-2 border rounded pr-10" />
-        <i class="fa fa-eye absolute right-3 top-3 text-gray-500 cursor-pointer" onclick="togglePassword('loginPassword', this)"></i>
+        <i class="fa fa-eye absolute right-3 top-3 text-gray-500 cursor-pointer" onclick="togglePassword('loginPassword', this)" title="Show/Hide Password"></i>
       </div>
 
       <p id="loginError" class="text-sm text-red-500"></p>
@@ -35,7 +34,7 @@
 
       <div class="relative">
         <input type="password" id="signupPassword" placeholder="Password" required class="w-full p-2 border rounded pr-10" />
-        <i class="fa fa-eye absolute right-3 top-3 text-gray-500 cursor-pointer" onclick="togglePassword('signupPassword', this)"></i>
+        <i class="fa fa-eye absolute right-3 top-3 text-gray-500 cursor-pointer" onclick="togglePassword('signupPassword', this)" title="Show/Hide Password"></i>
       </div>
 
       <p id="signupError" class="text-sm text-red-500"></p>
@@ -43,12 +42,11 @@
     </form>
   </div>
 
-  <!-- Firebase Config & Auth Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
       authDomain: "bdwork-346d3.firebaseapp.com",
@@ -59,50 +57,12 @@
       measurementId: "G-FM1YJ8E5GK"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    // Login Handler
-    document.getElementById("loginForm").addEventListener("submit", (e) => {
-      e.preventDefault();
-      const email = document.getElementById("loginEmail").value;
-      const password = document.getElementById("loginPassword").value;
-      const loginError = document.getElementById("loginError");
-
-      signInWithEmailAndPassword(auth, email, password)
-        .then(() => {
-          loginError.textContent = "";
-          alert("Login Successful!");
-          window.location.href = "/dashboard.html"; // Change as needed
-        })
-        .catch((error) => {
-          loginError.textContent = "Login Failed: " + error.message;
-        });
-    });
-
-    // Sign-Up Handler
-    document.getElementById("signupForm").addEventListener("submit", (e) => {
-      e.preventDefault();
-      const email = document.getElementById("signupEmail").value;
-      const password = document.getElementById("signupPassword").value;
-      const signupError = document.getElementById("signupError");
-
-      createUserWithEmailAndPassword(auth, email, password)
-        .then(() => {
-          signupError.textContent = "";
-          alert("Account Created Successfully!");
-          window.location.href = "/welcome.html"; // Change as needed
-        })
-        .catch((error) => {
-          signupError.textContent = "Sign Up Failed: " + error.message;
-        });
-    });
-  </script>
-
-  <!-- Toggle Password Script -->
-  <script>
-    function togglePassword(fieldId, icon) {
+    // Toggle password visibility
+    window.togglePassword = function(fieldId, icon) {
       const field = document.getElementById(fieldId);
       if (field.type === "password") {
         field.type = "text";
@@ -113,7 +73,51 @@
         icon.classList.remove("fa-eye-slash");
         icon.classList.add("fa-eye");
       }
-    }
+    };
+
+    // Login Handler
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value;
+      const loginError = document.getElementById("loginError");
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        loginError.textContent = "";
+        alert("Login Successful!");
+        window.location.href = "/dashboard.html";
+      } catch (error) {
+        loginError.textContent = "Login Failed: " + error.message;
+      }
+    });
+
+    // Sign-Up Handler with role "user"
+    document.getElementById("signupForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("signupEmail").value.trim();
+      const password = document.getElementById("signupPassword").value;
+      const signupError = document.getElementById("signupError");
+
+      try {
+        // Create user in Firebase Auth
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        // Add user document in Firestore with role = 'user'
+        await setDoc(doc(db, "users", user.uid), {
+          email: email,
+          role: "user",
+          createdAt: new Date().toISOString()
+        });
+
+        signupError.textContent = "";
+        alert("Account Created Successfully!");
+        window.location.href = "/welcome.html";
+      } catch (error) {
+        signupError.textContent = "Sign Up Failed: " + error.message;
+      }
+    });
   </script>
 </body>
 </html>
