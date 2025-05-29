@@ -2,41 +2,36 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Dashboard</title>
+
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@latest/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js" type="module"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js" type="module"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js" type="module"></script>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
 
-  <!-- Navbar -->
-  <nav class="bg-blue-600 text-white p-4 flex justify-between items-center shadow">
-    <h1 class="text-xl font-bold">Dashboard</h1>
-    <button id="logoutBtn" class="bg-red-500 px-4 py-2 rounded hover:bg-red-600">Logout</button>
-  </nav>
+  <div class="bg-white shadow-lg rounded-lg p-8 max-w-md w-full text-center">
+    <h2 class="text-2xl font-bold mb-4">Welcome to Dashboard</h2>
+    
+    <p class="mb-2 text-gray-700"><strong>Email:</strong> <span id="userEmail">Loading...</span></p>
+    <p class="mb-2 text-gray-700"><strong>Balance:</strong> <span id="userBalance">৳0</span></p>
+    <p class="mb-2 text-gray-700"><strong>Your Refer Code:</strong> <span id="userReferCode">...</span></p>
+    <p class="mb-2 text-gray-700"><strong>Total Refers:</strong> <span id="totalRefers">0</span></p>
 
-  <!-- Main Content -->
-  <main class="p-6">
-    <div class="bg-white p-6 rounded shadow-md space-y-4">
-      <h2 class="text-2xl font-semibold">Welcome to your Dashboard!</h2>
-      <p class="text-gray-700">You have successfully logged in using Firebase Authentication.</p>
-
-      <!-- Referral Code (small text) -->
-      <p class="text-gray-500 text-sm">
-        Referral Code: <span id="referralCode">Loading...</span>
-      </p>
-
-      <!-- Balance -->
-      <p class="text-gray-800 font-semibold text-lg">
-        Balance: $<span id="balance">0.00</span>
-      </p>
-    </div>
-  </main>
+    <button onclick="logout()" class="mt-6 w-full bg-red-600 text-white py-2 rounded hover:bg-red-700">
+      <i class="fas fa-sign-out-alt mr-1"></i> Logout
+    </button>
+  </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
+    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
       authDomain: "bdwork-346d3.firebaseapp.com",
@@ -47,43 +42,42 @@
       measurementId: "G-FM1YJ8E5GK"
     };
 
+    // Import Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // Init Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Redirect to login if not logged in, else load user data
+    // Load User Info
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        // Not logged in, redirect to login page
-        window.location.href = "/";
-      } else {
-        // Show referral code (user UID)
-        document.getElementById("referralCode").textContent = user.uid;
+        window.location.href = "login.html";
+        return;
+      }
 
-        // Fetch user data from Firestore
-        const userDocRef = doc(db, "users", user.uid);
-        const userDocSnap = await getDoc(userDocRef);
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        document.getElementById("userEmail").innerText = data.email;
+        document.getElementById("userBalance").innerText = `৳${data.balance || 0}`;
+        document.getElementById("userReferCode").innerText = data.uid;
 
-        if (userDocSnap.exists()) {
-          const userData = userDocSnap.data();
-          const balance = userData.balance ?? 0.00;
-          document.getElementById("balance").textContent = balance.toFixed(2);
-        } else {
-          // If user doc missing, show 0.00 balance
-          document.getElementById("balance").textContent = "0.00";
-        }
+        // Count total refers
+        const referQuery = query(collection(db, "users"), where("referredBy", "==", data.uid));
+        const referSnapshot = await getDocs(referQuery);
+        document.getElementById("totalRefers").innerText = referSnapshot.size;
       }
     });
 
-    // Logout button handler
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      signOut(auth).then(() => {
-        alert("Logged out successfully.");
-        window.location.href = "/";
-      }).catch((error) => {
-        alert("Logout Failed: " + error.message);
-      });
-    });
+    // Logout Function
+    window.logout = async function () {
+      await signOut(auth);
+      window.location.href = "index.html";
+    };
   </script>
 </body>
 </html>
