@@ -1,87 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Login & Sign Up</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login & Sign Up</title>
 
-  <!-- TailwindCSS + FontAwesome -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <!-- TailwindCSS + FontAwesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
-  <div class="w-full max-w-md bg-white p-6 rounded-xl shadow-lg space-y-6">
-    <!-- Login Form -->
-    <form id="loginForm" class="space-y-4">
-      <h2 class="text-2xl font-bold text-center">Login</h2>
-      <input type="email" id="loginEmail" placeholder="Email" required class="w-full p-2 border rounded" />
-      <input type="password" id="loginPassword" placeholder="Password" required class="w-full p-2 border rounded" />
-      <button type="submit" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Login</button>
-    </form>
+  <div class="w-full max-w-md bg-white p-6 rounded-xl shadow-lg space-y-6">
+    <!-- Login Form -->
+    <form id="loginForm" class="space-y-4">
+      <h2 class="text-2xl font-bold text-center">Login</h2>
+      <input type="email" id="loginEmail" placeholder="Email" required class="w-full p-2 border rounded" />
+      
+      <div class="relative">
+        <input type="password" id="loginPassword" placeholder="Password" required class="w-full p-2 border rounded pr-10" />
+        <i class="fa fa-eye absolute right-3 top-3 text-gray-500 cursor-pointer" onclick="togglePassword('loginPassword', this)"></i>
+      </div>
 
-    <hr class="border-gray-300" />
+      <p id="loginError" class="text-sm text-red-500"></p>
+      <button type="submit" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Login</button>
+    </form>
 
-    <!-- Sign-Up Form -->
-    <form id="signupForm" class="space-y-4">
-      <h2 class="text-2xl font-bold text-center">Sign Up</h2>
-      <input type="email" id="signupEmail" placeholder="Email" required class="w-full p-2 border rounded" />
-      <input type="password" id="signupPassword" placeholder="Password" required class="w-full p-2 border rounded" />
-      <button type="submit" class="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600">Sign Up</button>
-    </form>
-  </div>
+    <hr class="border-gray-300" />
 
-  <!-- Firebase Config & Auth Script -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    <!-- Sign-Up Form -->
+    <form id="signupForm" class="space-y-4">
+      <h2 class="text-2xl font-bold text-center">Sign Up</h2>
+      <input type="email" id="signupEmail" placeholder="Email" required class="w-full p-2 border rounded" />
 
-    // Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
-      authDomain: "bdwork-346d3.firebaseapp.com",
-      projectId: "bdwork-346d3",
-      storageBucket: "bdwork-346d3.appspot.com",
-      messagingSenderId: "900963179093",
-      appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
-      measurementId: "G-FM1YJ8E5GK"
-    };
+      <div class="relative">
+        <input type="password" id="signupPassword" placeholder="Password" required class="w-full p-2 border rounded pr-10" />
+        <i class="fa fa-eye absolute right-3 top-3 text-gray-500 cursor-pointer" onclick="togglePassword('signupPassword', this)"></i>
+      </div>
 
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+      <p id="signupError" class="text-sm text-red-500"></p>
+      <button type="submit" class="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600">Sign Up</button>
+    </form>
+  </div>
 
-    // Login Handler
-    document.getElementById("loginForm").addEventListener("submit", (e) => {
-      e.preventDefault();
-      const email = document.getElementById("loginEmail").value;
-      const password = document.getElementById("loginPassword").value;
+  <!-- Firebase Config & Auth Script -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-      signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-          alert("Login Successful!");
-          // Redirect or handle success
-        })
-        .catch((error) => {
-          alert("Login Failed: " + error.message);
-        });
-    });
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
+      authDomain: "bdwork-346d3.firebaseapp.com",
+      projectId: "bdwork-346d3",
+      storageBucket: "bdwork-346d3.appspot.com",
+      messagingSenderId: "900963179093",
+      appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
+      measurementId: "G-FM1YJ8E5GK"
+    };
 
-    // Sign-Up Handler
-    document.getElementById("signupForm").addEventListener("submit", (e) => {
-      e.preventDefault();
-      const email = document.getElementById("signupEmail").value;
-      const password = document.getElementById("signupPassword").value;
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
 
-      createUserWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-          alert("Account Created Successfully!");
-          // Redirect or handle success
-        })
-        .catch((error) => {
-          alert("Sign Up Failed: " + error.message);
-        });
-    });
-  </script>
+    // Login Handler
+    document.getElementById("loginForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const email = document.getElementById("loginEmail").value;
+      const password = document.getElementById("loginPassword").value;
+      const loginError = document.getElementById("loginError");
+
+      signInWithEmailAndPassword(auth, email, password)
+        .then(() => {
+          loginError.textContent = "";
+          alert("Login Successful!");
+          window.location.href = "/dashboard.html"; // Change as needed
+        })
+        .catch((error) => {
+          loginError.textContent = "Login Failed: " + error.message;
+        });
+    });
+
+    // Sign-Up Handler
+    document.getElementById("signupForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const email = document.getElementById("signupEmail").value;
+      const password = document.getElementById("signupPassword").value;
+      const signupError = document.getElementById("signupError");
+
+      createUserWithEmailAndPassword(auth, email, password)
+        .then(() => {
+          signupError.textContent = "";
+          alert("Account Created Successfully!");
+          window.location.href = "/welcome.html"; // Change as needed
+        })
+        .catch((error) => {
+          signupError.textContent = "Sign Up Failed: " + error.message;
+        });
+    });
+  </script>
+
+  <!-- Toggle Password Script -->
+  <script>
+    function togglePassword(fieldId, icon) {
+      const field = document.getElementById(fieldId);
+      if (field.type === "password") {
+        field.type = "text";
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash");
+      } else {
+        field.type = "password";
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye");
+      }
+    }
+  </script>
 </body>
 </html>
