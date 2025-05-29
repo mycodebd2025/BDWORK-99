@@ -16,15 +16,28 @@
 
   <!-- Main Content -->
   <main class="p-6">
-    <div class="bg-white p-6 rounded shadow-md">
-      <h2 class="text-2xl font-semibold mb-4">Welcome to your Dashboard!</h2>
+    <div class="bg-white p-6 rounded shadow-md space-y-4">
+      <h2 class="text-2xl font-semibold mb-2">Welcome to your Dashboard!</h2>
       <p class="text-gray-700">You have successfully logged in using Firebase Authentication.</p>
+
+      <!-- Referral Code -->
+      <div>
+        <h3 class="font-medium">Your Referral Code:</h3>
+        <p id="referralCode" class="text-blue-600 font-mono text-lg"></p>
+      </div>
+
+      <!-- Balance -->
+      <div>
+        <h3 class="font-medium">Your Balance:</h3>
+        <p id="balance" class="text-green-600 text-lg font-semibold"></p>
+      </div>
     </div>
   </main>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
@@ -39,16 +52,33 @@
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    // Redirect to login if not logged in
-    onAuthStateChanged(auth, (user) => {
+    const referralCodeEl = document.getElementById("referralCode");
+    const balanceEl = document.getElementById("balance");
+
+    // Auth state check
+    onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        // Not logged in, redirect to login page
         window.location.href = "/";
+        return;
+      }
+
+      // Set referral code = user's UID
+      referralCodeEl.textContent = user.uid;
+
+      // Fetch user data from Firestore
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        const balance = data.balance || 0;
+        balanceEl.textContent = balance.toFixed(2) + " USD";
+      } else {
+        balanceEl.textContent = "0.00 USD";
       }
     });
 
-    // Logout button handler
+    // Logout button
     document.getElementById("logoutBtn").addEventListener("click", () => {
       signOut(auth).then(() => {
         alert("Logged out successfully.");
