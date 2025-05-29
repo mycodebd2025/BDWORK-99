@@ -1,57 +1,23 @@
 <!DOCTYPE html>
-<html lang="en" >
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin Panel - Manage Users</title>
+  <title>Admin Panel</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-100 p-6">
 
-  <!-- Navbar -->
-  <nav class="bg-gray-800 text-white p-4 flex justify-between items-center shadow">
-    <h1 class="text-xl font-bold">Admin Panel</h1>
-    <button id="logoutBtn" class="bg-red-600 px-4 py-2 rounded hover:bg-red-700">Logout</button>
-  </nav>
+  <h1 class="text-3xl font-bold mb-4">Admin Panel</h1>
 
-  <!-- Main Content -->
-  <main class="p-6 max-w-5xl mx-auto">
-
-    <h2 class="text-3xl font-semibold mb-6">Manage Users</h2>
-
-    <div id="loading" class="text-center py-10 text-gray-500">Loading users...</div>
-
-    <table id="usersTable" class="min-w-full bg-white shadow-md rounded overflow-hidden hidden">
-      <thead class="bg-gray-200">
-        <tr>
-          <th class="py-3 px-4 text-left">Email</th>
-          <th class="py-3 px-4 text-left">Role</th>
-          <th class="py-3 px-4 text-left">Created At</th>
-          <th class="py-3 px-4 text-left">Actions</th>
-        </tr>
-      </thead>
-      <tbody id="usersBody" class="divide-y divide-gray-200"></tbody>
-    </table>
-
-  </main>
+  <div id="userList" class="space-y-4"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import {
-      getAuth,
-      onAuthStateChanged,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import {
-      getFirestore,
-      collection,
-      getDocs,
-      doc,
-      updateDoc,
-      query,
-      orderBy
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+    // ✅ Your Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
       authDomain: "bdwork-346d3.firebaseapp.com",
@@ -62,126 +28,66 @@
       measurementId: "G-FM1YJ8E5GK"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const loadingEl = document.getElementById("loading");
-    const usersTable = document.getElementById("usersTable");
-    const usersBody = document.getElementById("usersBody");
-    const logoutBtn = document.getElementById("logoutBtn");
+    const userList = document.getElementById("userList");
 
-    // Check user logged in and is admin
     onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        // Not logged in
-        window.location.href = "/";
-        return;
-      }
-      try {
-        // Fetch current user role from Firestore
-        const userDoc = await getDocs(collection(db, "users"));
-        const currentUserDoc = await getDocs(query(collection(db, "users"),));
-        const docRef = doc(db, "users", user.uid);
-        const docSnap = await docRef.get ? await docRef.get() : null;
-        if (!docSnap || !docSnap.exists()) {
-          alert("User data not found. Access denied.");
-          await signOut(auth);
+      if (user) {
+        const usersSnapshot = await getDocs(collection(db, "users"));
+        let isAdmin = false;
+
+        usersSnapshot.forEach((docItem) => {
+          if (docItem.id === user.uid && docItem.data().role === "admin") {
+            isAdmin = true;
+          }
+        });
+
+        if (!isAdmin) {
+          alert("Access Denied");
           window.location.href = "/";
           return;
         }
-        const userData = docSnap.data();
-        if (userData.role !== "admin") {
-          alert("Access denied: You are not an admin.");
-          await signOut(auth);
-          window.location.href = "/";
-          return;
-        }
-        // Load users list for admin
-        loadUsers();
-      } catch (error) {
-        console.error(error);
-        alert("Error checking user role: " + error.message);
-        await signOut(auth);
-        window.location.href = "/";
-      }
-    });
 
-    // Logout handler
-    logoutBtn.addEventListener("click", () => {
-      signOut(auth).then(() => {
-        window.location.href = "/";
-      });
-    });
-
-    // Load users from Firestore
-    async function loadUsers() {
-      loadingEl.style.display = "block";
-      usersTable.classList.add("hidden");
-      usersBody.innerHTML = "";
-
-      try {
-        const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) {
-          loadingEl.textContent = "No users found.";
-          return;
-        }
-
-        querySnapshot.forEach(docSnap => {
-          const user = docSnap.data();
-          const userId = docSnap.id;
-          const createdAt = user.createdAt ? new Date(user.createdAt).toLocaleString() : "-";
-
-          // Create table row
-          const tr = document.createElement("tr");
-          tr.classList.add("hover:bg-gray-50");
-
-          tr.innerHTML = `
-            <td class="py-3 px-4">${user.email}</td>
-            <td class="py-3 px-4">
-              <select class="border rounded p-1 role-select" data-user-id="${userId}">
-                <option value="user" ${user.role === "user" ? "selected" : ""}>User</option>
-                <option value="admin" ${user.role === "admin" ? "selected" : ""}>Admin</option>
-              </select>
-            </td>
-            <td class="py-3 px-4">${createdAt}</td>
-            <td class="py-3 px-4">
-              <button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 update-btn" data-user-id="${userId}">Update</button>
-            </td>
+        // List all users
+        usersSnapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          const userCard = document.createElement("div");
+          userCard.className = "bg-white p-4 rounded shadow";
+          userCard.innerHTML = `
+            <p><strong>Email:</strong> <input value="${data.email}" id="email-${docSnap.id}" class="border p-1 rounded w-full" /></p>
+            <p><strong>Role:</strong> <input value="${data.role}" id="role-${docSnap.id}" class="border p-1 rounded w-full" /></p>
+            <div class="flex gap-2 mt-2">
+              <button onclick="updateUser('${docSnap.id}')" class="bg-blue-500 text-white px-4 py-1 rounded">Update</button>
+              <button onclick="deleteUser('${docSnap.id}')" class="bg-red-500 text-white px-4 py-1 rounded">Delete</button>
+            </div>
           `;
-
-          usersBody.appendChild(tr);
+          userList.appendChild(userCard);
         });
-
-        loadingEl.style.display = "none";
-        usersTable.classList.remove("hidden");
-
-        // Add event listeners to update buttons
-        document.querySelectorAll(".update-btn").forEach(btn => {
-          btn.addEventListener("click", async (e) => {
-            const userId = e.target.getAttribute("data-user-id");
-            const selectEl = document.querySelector(`select.role-select[data-user-id="${userId}"]`);
-            const newRole = selectEl.value;
-
-            try {
-              await updateDoc(doc(db, "users", userId), {
-                role: newRole
-              });
-              alert("User role updated.");
-            } catch (err) {
-              alert("Failed to update user: " + err.message);
-            }
-          });
-        });
-
-      } catch (err) {
-        loadingEl.textContent = "Error loading users: " + err.message;
+      } else {
+        window.location.href = "/login.html";
       }
-    }
-  </script>
+    });
 
+    window.updateUser = async (userId) => {
+      const newEmail = document.getElementById(`email-${userId}`).value;
+      const newRole = document.getElementById(`role-${userId}`).value;
+      await updateDoc(doc(db, "users", userId), {
+        email: newEmail,
+        role: newRole
+      });
+      alert("User updated!");
+    };
+
+    window.deleteUser = async (userId) => {
+      if (confirm("Are you sure you want to delete this user?")) {
+        await deleteDoc(doc(db, "users", userId));
+        alert("User deleted!");
+        location.reload();
+      }
+    };
+  </script>
 </body>
 </html>
