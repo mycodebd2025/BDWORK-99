@@ -6,19 +6,27 @@
   <title>Admin Panel</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 p-6">
+<body class="bg-gray-100 min-h-screen">
 
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-3xl font-bold">Admin Panel</h1>
-    <button id="logoutBtn" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Logout</button>
-  </div>
+  <!-- Navbar -->
+  <nav class="bg-blue-600 text-white p-4 flex justify-between items-center shadow">
+    <h1 class="text-xl font-bold">Admin Panel</h1>
+    <button id="logoutBtn" class="bg-red-500 px-4 py-2 rounded hover:bg-red-600">Logout</button>
+  </nav>
 
-  <div id="userList" class="space-y-4"></div>
+  <!-- Main Content -->
+  <main class="p-6">
+    <div id="adminContent" class="hidden bg-white p-6 rounded shadow-md">
+      <h2 class="text-2xl font-semibold mb-4">Welcome, Admin!</h2>
+      <p class="text-gray-700">You have access to manage users.</p>
+      <!-- Admin tools go here -->
+    </div>
+  </main>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
@@ -34,73 +42,38 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const userList = document.getElementById("userList");
     const logoutBtn = document.getElementById("logoutBtn");
+    const adminContent = document.getElementById("adminContent");
 
-    // Logout functionality
-    logoutBtn.addEventListener("click", async () => {
-      await signOut(auth);
-      alert("Logged out");
-      window.location.href = "/index.html";
-    });
-
-    // Auth state check
     onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const usersSnapshot = await getDocs(collection(db, "users"));
-        let isAdmin = false;
+      if (!user) {
+        window.location.href = "/";
+        return;
+      }
 
-        usersSnapshot.forEach((docItem) => {
-          if (docItem.id === user.uid && docItem.data().role === "admin") {
-            isAdmin = true;
-          }
-        });
+      const docRef = doc(db, "users", user.uid);
+      const docSnap = await getDoc(docRef);
 
-        if (!isAdmin) {
-          alert("Access Denied");
-          window.location.href = "/";
-          return;
-        }
+      if (!docSnap.exists()) {
+        alert("User data not found.");
+        window.location.href = "/";
+        return;
+      }
 
-        // Show users
-        usersSnapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          const userCard = document.createElement("div");
-          userCard.className = "bg-white p-4 rounded shadow";
-          userCard.innerHTML = `
-            <p><strong>Email:</strong> <input value="${data.email}" id="email-${docSnap.id}" class="border p-1 rounded w-full" /></p>
-            <p><strong>Role:</strong> <input value="${data.role}" id="role-${docSnap.id}" class="border p-1 rounded w-full" /></p>
-            <div class="flex gap-2 mt-2">
-              <button onclick="updateUser('${docSnap.id}')" class="bg-blue-500 text-white px-4 py-1 rounded">Update</button>
-              <button onclick="deleteUser('${docSnap.id}')" class="bg-red-500 text-white px-4 py-1 rounded">Delete</button>
-            </div>
-          `;
-          userList.appendChild(userCard);
-        });
+      const userData = docSnap.data();
+      if (userData.role === "admin") {
+        adminContent.classList.remove("hidden");
       } else {
-        window.location.href = "/index.html";
+        alert("Access denied. Admins only.");
+        window.location.href = "/";
       }
     });
 
-    // Update user function
-    window.updateUser = async (userId) => {
-      const newEmail = document.getElementById(`email-${userId}`).value;
-      const newRole = document.getElementById(`role-${userId}`).value;
-      await updateDoc(doc(db, "users", userId), {
-        email: newEmail,
-        role: newRole
+    logoutBtn.addEventListener("click", () => {
+      signOut(auth).then(() => {
+        window.location.href = "/";
       });
-      alert("User updated!");
-    };
-
-    // Delete user function
-    window.deleteUser = async (userId) => {
-      if (confirm("Are you sure you want to delete this user?")) {
-        await deleteDoc(doc(db, "users", userId));
-        alert("User deleted!");
-        location.reload();
-      }
-    };
+    });
   </script>
 </body>
 </html>
