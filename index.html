@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Login & Sign Up</title>
+  <title>Login & Sign Up with Referral</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 </head>
@@ -37,6 +37,9 @@
         <i class="fa fa-eye absolute right-3 top-3 text-gray-500 cursor-pointer" onclick="togglePassword('signupPassword', this)" title="Show/Hide Password"></i>
       </div>
 
+      <!-- Referral Code Input -->
+      <input type="text" id="referralCodeInput" placeholder="Referral Code (optional)" class="w-full p-2 border rounded" />
+
       <p id="signupError" class="text-sm text-red-500"></p>
       <button type="submit" class="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600">Sign Up</button>
     </form>
@@ -45,7 +48,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
@@ -92,11 +95,12 @@
       }
     });
 
-    // Sign-Up Handler with role "user"
+    // Sign-Up Handler with referral bonus
     document.getElementById("signupForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const email = document.getElementById("signupEmail").value.trim();
       const password = document.getElementById("signupPassword").value;
+      const referralCode = document.getElementById("referralCodeInput").value.trim();
       const signupError = document.getElementById("signupError");
 
       try {
@@ -104,13 +108,27 @@
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // Add user document in Firestore with role = 'user'
+        // Create user document in Firestore with initial balance 0
         await setDoc(doc(db, "users", user.uid), {
           email: email,
           role: "user",
           balance: 0.00,
           createdAt: new Date().toISOString()
         });
+
+        // If referral code provided, check if it exists
+        if (referralCode) {
+          const referrerDocRef = doc(db, "users", referralCode);
+          const referrerDocSnap = await getDoc(referrerDocRef);
+
+          if (referrerDocSnap.exists()) {
+            // Add 10 bonus to referrer balance
+            await updateDoc(referrerDocRef, {
+              balance: increment(10)
+            });
+          }
+          // else invalid referral code - ignoring, no bonus
+        }
 
         signupError.textContent = "";
         alert("Account Created Successfully!");
