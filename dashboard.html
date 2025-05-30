@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard</title>
+  <title>User Dashboard</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 
   <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js" type="module"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js" type="module"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js" type="module"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center">
 
@@ -28,7 +28,7 @@
     </p>
     <p class="text-gray-700"><strong>Total Refers:</strong> <span id="totalRefers">0</span></p>
 
-    <!-- Withdraw Section -->
+    <!-- Withdraw Request Section -->
     <div class="mt-4">
       <input 
         id="withdrawAmount" 
@@ -38,10 +38,10 @@
         class="border border-gray-300 rounded px-4 py-2 w-full mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
       <button 
-        onclick="withdraw()" 
-        class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
+        onclick="requestWithdraw()" 
+        class="w-full bg-yellow-500 text-white py-2 rounded hover:bg-yellow-600 transition"
       >
-        Withdraw
+        Request Withdraw
       </button>
     </div>
 
@@ -51,7 +51,10 @@
   </div>
 
   <script type="module">
-    // Firebase Config
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc, collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
       authDomain: "bdwork-346d3.firebaseapp.com",
@@ -62,15 +65,11 @@
       measurementId: "G-FM1YJ8E5GK"
     };
 
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    let currentUserData = null; // to keep user data for updates
+    let currentUserData = null;
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
@@ -79,8 +78,7 @@
       }
 
       try {
-        const userDocRef = doc(db, "users", user.uid);
-        const userDoc = await getDoc(userDocRef);
+        const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
           const data = userDoc.data();
           currentUserData = { uid: user.uid, ...data };
@@ -98,38 +96,38 @@
       }
     });
 
-    window.withdraw = async function () {
+    window.requestWithdraw = async function () {
       const amountInput = document.getElementById("withdrawAmount");
       const amount = parseFloat(amountInput.value);
 
       if (isNaN(amount) || amount <= 0) {
-        alert("Please enter a valid amount greater than 0.");
+        alert("Please enter a valid amount.");
         return;
       }
 
       if (!currentUserData) {
-        alert("User data not loaded yet.");
+        alert("User data not loaded.");
         return;
       }
 
-      const currentBalance = currentUserData.balance || 0;
-      if (amount > currentBalance) {
-        alert("You don't have enough balance to withdraw that amount.");
+      if (amount > currentUserData.balance) {
+        alert("Insufficient balance.");
         return;
       }
 
       try {
-        const userDocRef = doc(db, "users", currentUserData.uid);
-        const newBalance = currentBalance - amount;
+        await addDoc(collection(db, "withdraws"), {
+          uid: currentUserData.uid,
+          email: currentUserData.email,
+          amount,
+          status: "pending",
+          timestamp: serverTimestamp()
+        });
 
-        await updateDoc(userDocRef, { balance: newBalance });
-        currentUserData.balance = newBalance;
-
-        document.getElementById("userBalance").innerText = `৳${newBalance}`;
+        alert("Withdraw request submitted successfully.");
         amountInput.value = "";
-        alert(`Successfully withdrawn ৳${amount}. Your new balance is ৳${newBalance}.`);
       } catch (err) {
-        alert("Failed to process withdrawal: " + err.message);
+        alert("Failed to submit withdraw request: " + err.message);
       }
     };
 
