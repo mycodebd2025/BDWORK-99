@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>User Dashboard</title>
+  <title>User Dashboard with Referral</title>
 
   <!-- TailwindCSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -20,9 +20,14 @@
 
   <main class="flex-grow p-6 max-w-3xl mx-auto w-full space-y-8">
 
-    <section class="bg-white p-6 rounded shadow">
-      <h2 class="text-2xl font-semibold mb-4">Welcome, <span id="userEmail">User</span></h2>
-      <p class="mb-2">Your current balance: <span id="userBalance" class="font-mono text-lg">৳0.00</span></p>
+    <section class="bg-white p-6 rounded shadow space-y-3">
+      <h2 class="text-2xl font-semibold">Welcome, <span id="userEmail">User</span></h2>
+
+      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
+        <p>Your current balance: <span id="userBalance" class="font-mono text-lg">৳0.00</span></p>
+        <p>Your referral code: <span id="referralCode" class="font-mono text-lg text-blue-700"></span></p>
+        <p>Total referrals: <span id="referralCount" class="font-mono text-lg text-green-700">0</span></p>
+      </div>
     </section>
 
     <section class="bg-white p-6 rounded shadow">
@@ -80,7 +85,7 @@
       serverTimestamp
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // Firebase Config - তোমার প্রকল্প অনুযায়ী বদলাও
+    // তোমার Firebase config এখানে বসাও
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
       authDomain: "bdwork-346d3.firebaseapp.com",
@@ -98,6 +103,8 @@
     const logoutBtn = document.getElementById('logoutBtn');
     const userEmailElem = document.getElementById('userEmail');
     const userBalanceElem = document.getElementById('userBalance');
+    const referralCodeElem = document.getElementById('referralCode');
+    const referralCountElem = document.getElementById('referralCount');
     const withdrawForm = document.getElementById('withdrawForm');
     const withdrawListBody = document.getElementById('withdrawListBody');
     const formMsg = document.getElementById('formMsg');
@@ -118,6 +125,7 @@
       }
       currentUser = user;
       await loadUserData();
+      await loadReferralCount();
       await loadWithdrawRequests();
     });
 
@@ -137,9 +145,33 @@
         userEmailElem.textContent = userData.email || currentUser.email || 'User';
         userBalanceElem.textContent = `৳${(userData.balance || 0).toFixed(2)}`;
 
+        // Referral Code
+        referralCodeElem.textContent = userData.referralCode || 'N/A';
+
       } catch (error) {
         alert('Failed to load user data: ' + error.message);
         console.error(error);
+      }
+    }
+
+    async function loadReferralCount() {
+      referralCountElem.textContent = '...';
+
+      if (!userData?.referralCode) {
+        referralCountElem.textContent = '0';
+        return;
+      }
+
+      try {
+        const usersCol = collection(db, 'users');
+        const q = query(usersCol, where('referredBy', '==', userData.referralCode));
+        const snapshot = await getDocs(q);
+
+        referralCountElem.textContent = snapshot.size;
+
+      } catch (error) {
+        referralCountElem.textContent = '0';
+        console.error('Failed to load referral count:', error);
       }
     }
 
@@ -207,7 +239,6 @@
       }
 
       try {
-        // Add withdraw request to Firestore with pending status
         await addDoc(collection(db, 'withdraws'), {
           uid: currentUser.uid,
           email: userData.email || currentUser.email || '',
@@ -219,7 +250,7 @@
         formMsg.textContent = 'Withdraw request submitted successfully!';
         formMsg.className = 'text-green-600 mt-2';
 
-        // Optionally update local balance (or reload user data)
+        // Update local balance immediately (optional)
         userData.balance -= amount;
         userBalanceElem.textContent = `৳${userData.balance.toFixed(2)}`;
 
