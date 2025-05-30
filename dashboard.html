@@ -59,6 +59,14 @@
       </button>
     </div>
 
+    <!-- Withdraw History -->
+    <div class="pt-6 border-t border-gray-200">
+      <h3 class="text-lg font-semibold text-gray-800 mb-2">Withdraw History</h3>
+      <div id="withdrawHistory" class="space-y-2 max-h-60 overflow-y-auto">
+        <p class="text-gray-500 text-sm">Loading history...</p>
+      </div>
+    </div>
+
     <button onclick="logout()" class="w-full bg-red-600 text-white py-2 rounded-md hover:bg-red-700">
       <i class="fas fa-sign-out-alt mr-1"></i> Logout
     </button>
@@ -108,6 +116,39 @@
           const referQuery = query(collection(db, "users"), where("referredBy", "==", user.uid));
           const referSnapshot = await getDocs(referQuery);
           document.getElementById("totalRefers").innerText = referSnapshot.size;
+
+          // Load withdraw history
+          const withdrawQuery = query(
+            collection(db, "withdraws"),
+            where("uid", "==", user.uid)
+          );
+          const withdrawSnap = await getDocs(withdrawQuery);
+          const historyContainer = document.getElementById("withdrawHistory");
+
+          if (withdrawSnap.empty) {
+            historyContainer.innerHTML = '<p class="text-sm text-gray-500">No withdraw history found.</p>';
+          } else {
+            historyContainer.innerHTML = "";
+            withdrawSnap.forEach(doc => {
+              const data = doc.data();
+              const date = data.timestamp?.toDate().toLocaleString() || "Unknown time";
+              const item = document.createElement("div");
+              item.className = "bg-gray-100 p-3 rounded-md shadow-sm text-sm flex justify-between items-center";
+              item.innerHTML = `
+                <div>
+                  <p class="font-medium text-gray-700">৳${data.amount}</p>
+                  <p class="text-xs text-gray-500">${date}</p>
+                </div>
+                <span class="text-xs px-2 py-1 rounded-full ${
+                  data.status === "approved" ? "bg-green-100 text-green-700" :
+                  data.status === "rejected" ? "bg-red-100 text-red-700" :
+                  "bg-yellow-100 text-yellow-700"
+                }">${data.status}</span>
+              `;
+              historyContainer.appendChild(item);
+            });
+          }
+
         }
       } catch (err) {
         alert("Failed to load user data: " + err.message);
@@ -152,6 +193,7 @@
         document.getElementById("userBalance").innerText = `৳${newBalance}`;
         amountInput.value = "";
         alert(`Withdraw request of ৳${amount} submitted successfully!`);
+        window.location.reload(); // Reload to show updated history
       } catch (err) {
         alert("Failed to process withdrawal: " + err.message);
       }
