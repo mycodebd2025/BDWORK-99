@@ -5,10 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Admin Panel</title>
 
-  <!-- TailwindCSS & FontAwesome -->
+  <!-- Tailwind CSS & FontAwesome -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
-
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
 
@@ -20,14 +19,12 @@
   </header>
 
   <main class="flex-grow p-6 max-w-6xl mx-auto w-full space-y-10">
-
+    <!-- Users Management -->
     <section>
-      <h2 class="text-2xl font-semibold mb-6">Users Management</h2>
-
-      <!-- Scrollable container for horizontal scroll -->
+      <h2 class="text-2xl font-semibold mb-4">Users Management</h2>
       <div class="overflow-x-auto border rounded shadow bg-white">
         <table class="w-full min-w-[700px] border-collapse border border-gray-300">
-          <thead class="bg-gray-200 sticky top-0 z-10">
+          <thead class="bg-gray-200">
             <tr>
               <th class="p-3 border border-gray-300 text-left">Email</th>
               <th class="p-3 border border-gray-300 text-left">Balance (৳)</th>
@@ -42,25 +39,24 @@
       </div>
     </section>
 
+    <!-- Withdraw History -->
     <section>
-      <h2 class="text-2xl font-semibold mb-6">Withdraw History</h2>
-
-      <div class="overflow-x-auto border rounded shadow bg-white max-h-80">
-        <table class="w-full min-w-[500px] border-collapse border border-gray-300">
-          <thead class="bg-gray-200 sticky top-0 z-10">
+      <h2 class="text-2xl font-semibold mb-4">Withdraw History</h2>
+      <div class="overflow-x-auto border rounded shadow bg-white">
+        <table class="w-full min-w-[600px] border-collapse border border-gray-300">
+          <thead class="bg-gray-200">
             <tr>
-              <th class="p-3 border border-gray-300 text-left">User Email</th>
+              <th class="p-3 border border-gray-300 text-left">Email</th>
               <th class="p-3 border border-gray-300 text-left">Amount (৳)</th>
-              <th class="p-3 border border-gray-300 text-left">Date & Time</th>
+              <th class="p-3 border border-gray-300 text-left">Timestamp</th>
             </tr>
           </thead>
-          <tbody id="withdrawHistoryBody">
+          <tbody id="withdrawsTableBody">
             <tr><td colspan="3" class="p-4 text-center text-gray-500">Loading withdraw history...</td></tr>
           </tbody>
         </table>
       </div>
     </section>
-
   </main>
 
   <script type="module">
@@ -68,7 +64,7 @@
     import {
       getAuth,
       onAuthStateChanged,
-      signOut,
+      signOut
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import {
       getFirestore,
@@ -78,11 +74,9 @@
       getDoc,
       updateDoc,
       query,
-      orderBy,
-      limit,
+      orderBy
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
       authDomain: "bdwork-346d3.firebaseapp.com",
@@ -93,166 +87,98 @@
       measurementId: "G-FM1YJ8E5GK"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
     const usersTableBody = document.getElementById("usersTableBody");
-    const withdrawHistoryBody = document.getElementById("withdrawHistoryBody");
-    const logoutBtn = document.getElementById("logoutBtn");
+    const withdrawsTableBody = document.getElementById("withdrawsTableBody");
 
-    logoutBtn.addEventListener("click", async () => {
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
       await signOut(auth);
       window.location.href = "login.html";
     });
 
     async function loadUsers() {
-      usersTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">Loading users...</td></tr>`;
       try {
-        const usersCol = collection(db, "users");
-        const usersSnapshot = await getDocs(usersCol);
-
-        if (usersSnapshot.empty) {
-          usersTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">No users found.</td></tr>`;
-          return;
-        }
-
-        let rowsHtml = "";
-        usersSnapshot.forEach((docSnap) => {
+        const usersSnapshot = await getDocs(collection(db, "users"));
+        let html = "";
+        usersSnapshot.forEach(docSnap => {
           const user = docSnap.data();
-          rowsHtml += `
-            <tr class="border-t border-gray-200 hover:bg-gray-50">
-              <td class="p-3 border border-gray-300 break-words max-w-xs">${user.email || "N/A"}</td>
-              <td class="p-3 border border-gray-300">
-                <input type="number" min="0" step="0.01" value="${user.balance || 0}" class="balance-input border rounded px-2 py-1 w-28" data-uid="${docSnap.id}" />
+          html += `
+            <tr>
+              <td class="p-3 border">${user.email || "N/A"}</td>
+              <td class="p-3 border">
+                <input type="number" class="border rounded px-2 py-1 w-24 balance-input" value="${user.balance || 0}" data-uid="${docSnap.id}" />
               </td>
-              <td class="p-3 border border-gray-300">
-                <select class="role-select border rounded px-2 py-1" data-uid="${docSnap.id}">
+              <td class="p-3 border">
+                <select class="border rounded px-2 py-1 role-select" data-uid="${docSnap.id}">
                   <option value="user" ${user.role === "user" ? "selected" : ""}>User</option>
                   <option value="admin" ${user.role === "admin" ? "selected" : ""}>Admin</option>
                 </select>
               </td>
-              <td class="p-3 border border-gray-300 text-center">
-                <button class="update-balance-btn bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded" data-uid="${docSnap.id}">
-                  Update
-                </button>
+              <td class="p-3 border text-center">
+                <button class="bg-green-500 text-white px-4 py-1 rounded update-btn" data-uid="${docSnap.id}">Update</button>
               </td>
             </tr>
           `;
         });
+        usersTableBody.innerHTML = html;
 
-        usersTableBody.innerHTML = rowsHtml;
-
-        // Update role event
         document.querySelectorAll(".role-select").forEach(select => {
           select.addEventListener("change", async (e) => {
-            const uid = e.target.getAttribute("data-uid");
-            const newRole = e.target.value;
-            try {
-              await updateDoc(doc(db, "users", uid), { role: newRole });
-              alert(`User role updated to "${newRole}"`);
-            } catch (err) {
-              alert("Failed to update role: " + err.message);
-              console.error(err);
-            }
+            const uid = e.target.dataset.uid;
+            const role = e.target.value;
+            await updateDoc(doc(db, "users", uid), { role });
+            alert("Role updated.");
           });
         });
 
-        // Update balance event
-        document.querySelectorAll(".update-balance-btn").forEach(btn => {
-          btn.addEventListener("click", async (e) => {
-            const uid = e.target.getAttribute("data-uid");
-            const input = document.querySelector(`.balance-input[data-uid="${uid}"]`);
-            const newBalance = parseFloat(input.value);
-            if (isNaN(newBalance) || newBalance < 0) {
-              alert("Please enter a valid non-negative balance.");
-              return;
-            }
-            try {
-              await updateDoc(doc(db, "users", uid), { balance: newBalance });
-              alert("Balance updated successfully.");
-            } catch (err) {
-              alert("Failed to update balance: " + err.message);
-              console.error(err);
-            }
+        document.querySelectorAll(".update-btn").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const uid = btn.dataset.uid;
+            const input = document.querySelector(`.balance-input[data-uid='${uid}']`);
+            const balance = parseFloat(input.value);
+            await updateDoc(doc(db, "users", uid), { balance });
+            alert("Balance updated.");
           });
         });
 
       } catch (error) {
-        usersTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-600">Error loading users: ${error.message}</td></tr>`;
-        console.error("Error loading users:", error);
+        usersTableBody.innerHTML = `<tr><td colspan="4" class="text-center text-red-500">Error: ${error.message}</td></tr>`;
       }
     }
 
-    async function loadWithdrawHistory() {
-      withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-500">Loading withdraw history...</td></tr>`;
+    async function loadWithdraws() {
       try {
-        const withdrawsCol = collection(db, "withdraws");
-        // Get latest 50 withdraws ordered by timestamp descending
-        const q = query(withdrawsCol, orderBy("timestamp", "desc"), limit(50));
-        const withdrawsSnapshot = await getDocs(q);
-
-        if (withdrawsSnapshot.empty) {
-          withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center">No withdraw history found.</td></tr>`;
-          return;
-        }
-
-        let rowsHtml = "";
+        const withdrawsSnapshot = await getDocs(query(collection(db, "withdraws"), orderBy("timestamp", "desc")));
+        let html = "";
         withdrawsSnapshot.forEach(docSnap => {
           const wd = docSnap.data();
-          // Format date & time nicely
-          let dtStr = "N/A";
-          if (wd.timestamp && wd.timestamp.toDate) {
-            dtStr = wd.timestamp.toDate().toLocaleString();
-          }
-          rowsHtml += `
-            <tr class="border-t border-gray-200 hover:bg-gray-50">
-              <td class="p-3 border border-gray-300 break-words max-w-xs">${wd.email || "N/A"}</td>
-              <td class="p-3 border border-gray-300">${wd.amount || 0}</td>
-              <td class="p-3 border border-gray-300">${dtStr}</td>
+          const time = wd.timestamp?.toDate().toLocaleString() || "-";
+          html += `
+            <tr>
+              <td class="p-3 border">${wd.email || "N/A"}</td>
+              <td class="p-3 border">৳${wd.amount || 0}</td>
+              <td class="p-3 border">${time}</td>
             </tr>
           `;
         });
-
-        withdrawHistoryBody.innerHTML = rowsHtml;
-
-      } catch (err) {
-        withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-red-600">Error loading withdraw history: ${err.message}</td></tr>`;
-        console.error("Error loading withdraw history:", err);
+        withdrawsTableBody.innerHTML = html || `<tr><td colspan="3" class="text-center text-gray-500">No withdraw history found.</td></tr>`;
+      } catch (error) {
+        withdrawsTableBody.innerHTML = `<tr><td colspan="3" class="text-center text-red-500">Error: ${error.message}</td></tr>`;
       }
     }
 
     onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        alert("Please login first.");
-        window.location.href = "login.html";
-        return;
+      if (!user) return (window.location.href = "login.html");
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (!userDoc.exists() || userDoc.data().role !== "admin") {
+        alert("Access denied.");
+        return (window.location.href = "login.html");
       }
-      try {
-        const userDocRef = doc(db, "users", user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-        if (!userDocSnap.exists()) {
-          alert("User data not found.");
-          await signOut(auth);
-          window.location.href = "login.html";
-          return;
-        }
-        const userData = userDocSnap.data();
-        if (userData.role !== "admin") {
-          alert("Access denied: You are not an admin.");
-          await signOut(auth);
-          window.location.href = "login.html";
-          return;
-        }
-        await loadUsers();
-        await loadWithdrawHistory();
-      } catch (err) {
-        console.error("Error checking user role:", err);
-        alert("Error checking user role: " + err.message);
-        await signOut(auth);
-        window.location.href = "login.html";
-      }
+      loadUsers();
+      loadWithdraws();
     });
   </script>
 </body>
