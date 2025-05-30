@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex items-center justify-center h-screen bg-gray-100">
+  <div class="w-full max-w-sm bg-white p-6 rounded shadow-md">
+    <h2 class="text-2xl font-bold text-center mb-4">Admin Login</h2>
+
+    <input type="email" id="adminEmail" placeholder="Email" class="w-full mb-3 px-4 py-2 border rounded" />
+    <input type="password" id="adminPassword" placeholder="Password" class="w-full mb-3 px-4 py-2 border rounded" />
+    <button onclick="adminLogin()" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Login</button>
+
+    <p class="text-center text-sm mt-3">
+      Not an admin? <a href="login.html" class="text-blue-500 hover:underline">User Login</a>
+    </p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
+      authDomain: "bdwork-346d3.firebaseapp.com",
+      projectId: "bdwork-346d3",
+      storageBucket: "bdwork-346d3.appspot.com",
+      messagingSenderId: "900963179093",
+      appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
+      measurementId: "G-FM1YJ8E5GK"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    window.adminLogin = async () => {
+      const email = document.getElementById("adminEmail").value.trim();
+      const password = document.getElementById("adminPassword").value;
+
+      if (!email || !password) {
+        alert("Please enter both email and password.");
+        return;
+      }
+
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        // Token থেকে কাস্টম ক্লেইমস পড়া
+        const idTokenResult = await user.getIdTokenResult();
+
+        if (idTokenResult.claims.role === "admin") {
+          alert("Welcome Admin!");
+          window.location.href = "admin-panel.html";
+        } else {
+          alert("Access denied: You are not an admin.");
+          await auth.signOut();
+        }
+      } catch (error) {
+        alert("Login failed: " + error.message);
+      }
+    };
+  </script>
+</body>
+</html>
