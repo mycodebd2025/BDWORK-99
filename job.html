@@ -6,19 +6,16 @@
   <title>Jobs</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-blue-50 min-h-screen p-6">
-  <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md p-6 space-y-6">
-    <h1 class="text-2xl font-bold text-center text-gray-800">📸 Upload Screenshots to Earn Money</h1>
+<body class="bg-gray-100 min-h-screen p-6">
+  <div class="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow space-y-6">
+    <h2 class="text-2xl font-bold text-center">🎯 Complete Jobs and Earn ৫৳</h2>
 
-    <div id="jobsContainer" class="space-y-6"></div>
+    <div id="jobsContainer" class="space-y-4"></div>
 
-    <div class="text-center">
-      <button onclick="logout()" class="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-        Logout
-      </button>
-    </div>
+    <button onclick="logout()" class="w-full mt-6 bg-red-600 text-white py-2 rounded hover:bg-red-700">Logout</button>
   </div>
 
+  <!-- Firebase SDKs -->
   <script type="module">
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
@@ -26,93 +23,88 @@
       projectId: "bdwork-346d3",
       storageBucket: "bdwork-346d3.appspot.com",
       messagingSenderId: "900963179093",
-      appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
-      measurementId: "G-FM1YJ8E5GK"
+      appId: "1:900963179093:web:81e42d67bb31d603cc92dc"
     };
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { 
-      getFirestore, doc, getDoc, updateDoc, collection, addDoc, Timestamp 
+    import {
+      getFirestore, doc, getDoc, updateDoc, setDoc
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+    import {
+      getStorage, ref, uploadBytes, getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
     const storage = getStorage(app);
 
-    const jobCount = 4;
-
+    const jobList = ["job1", "job2", "job3", "job4"];
     let currentUser = null;
+    let userData = null;
 
     onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        window.location.href = "login.html";
-        return;
-      }
+      if (!user) return window.location.href = "login.html";
       currentUser = user;
+      const docSnap = await getDoc(doc(db, "users", user.uid));
+      userData = docSnap.data();
       renderJobs();
     });
 
     function renderJobs() {
       const container = document.getElementById("jobsContainer");
-      for (let i = 1; i <= jobCount; i++) {
-        container.innerHTML += `
-          <div class="p-4 bg-gray-100 rounded shadow">
-            <h2 class="text-lg font-semibold mb-2">Job ${i}</h2>
-            <input type="file" id="screenshot${i}" accept="image/*" class="mb-2 block"/>
-            <button onclick="submitJob(${i})" class="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700">Submit</button>
-            <p id="status${i}" class="text-sm text-gray-600 mt-1"></p>
-          </div>
+      container.innerHTML = "";
+      jobList.forEach((jobId, index) => {
+        const jobDiv = document.createElement("div");
+        jobDiv.className = "border p-4 rounded-lg bg-gray-50";
+        jobDiv.innerHTML = `
+          <h3 class="font-semibold mb-2">Job ${index + 1}</h3>
+          <input type="file" id="file-${jobId}" accept="image/*" class="mb-2">
+          <button onclick="submitJob('${jobId}')" class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700">Submit</button>
         `;
-      }
+        container.appendChild(jobDiv);
+      });
     }
 
-    window.submitJob = async function(jobId) {
-      const fileInput = document.getElementById(`screenshot${jobId}`);
-      const statusText = document.getElementById(`status${jobId}`);
+    async function submitJob(jobId) {
+      const fileInput = document.getElementById(`file-${jobId}`);
       const file = fileInput.files[0];
+      if (!file) return alert("Please upload a screenshot.");
 
-      if (!file) {
-        statusText.innerText = "Please upload a screenshot.";
+      const jobRef = doc(db, "users", currentUser.uid, "submittedJobs", jobId);
+      const jobSnap = await getDoc(jobRef);
+
+      if (jobSnap.exists()) {
+        alert("You already submitted this job.");
         return;
       }
 
       try {
-        const storageRef = ref(storage, `jobScreenshots/${currentUser.uid}/job${jobId}_${Date.now()}.jpg`);
+        const storageRef = ref(storage, `jobs/${currentUser.uid}/${jobId}`);
         await uploadBytes(storageRef, file);
         const downloadURL = await getDownloadURL(storageRef);
 
-        const userDocRef = doc(db, "users", currentUser.uid);
-        const userDoc = await getDoc(userDocRef);
-        const currentBalance = userDoc.data().balance || 0;
-
-        // Add job record
-        await addDoc(collection(db, "jobs"), {
-          uid: currentUser.uid,
-          jobId: jobId,
-          imageUrl: downloadURL,
-          timestamp: Timestamp.now()
+        await setDoc(jobRef, {
+          submittedAt: new Date(),
+          screenshot: downloadURL
         });
 
-        // Update balance
-        await updateDoc(userDocRef, {
-          balance: currentBalance + 5
-        });
+        const userRef = doc(db, "users", currentUser.uid);
+        const newBalance = (userData.balance || 0) + 5;
+        await updateDoc(userRef, { balance: newBalance });
+        userData.balance = newBalance;
 
-        console.log(`Job ${jobId} submitted. +5৳ added. New Balance: ৳${currentBalance + 5}`);
-        statusText.innerText = `✅ Job ${jobId} submitted! ৳5 added to your balance.`;
-        fileInput.value = ""; // clear input
+        alert(`Job ${jobId} submitted! ৫৳ added to your balance.`);
+        fileInput.value = "";
       } catch (err) {
-        console.error("Error during job submit:", err);
-        statusText.innerText = "❌ Error: " + err.message;
+        alert("Error submitting job: " + err.message);
       }
-    };
+    }
 
-    window.logout = async function () {
+    window.logout = async () => {
       await signOut(auth);
-      window.location.href = "login.html";
+      location.href = "login.html";
     };
   </script>
 </body>
