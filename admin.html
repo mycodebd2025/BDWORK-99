@@ -208,7 +208,7 @@
       withdrawRequestsBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">Loading withdraw requests...</td></tr>`;
       try {
         const withdrawsCol = collection(db, "withdraws");
-        // Get pending and others, order by timestamp desc
+        // Get latest 50 withdraws ordered by timestamp desc
         const q = query(withdrawsCol, orderBy("timestamp", "desc"), limit(50));
         const withdrawsSnapshot = await getDocs(q);
 
@@ -271,15 +271,6 @@
           return;
         }
 
-        // If reject, just update status
-        if (action === "rejected") {
-          await updateDoc(wdDocRef, { status: "rejected" });
-          alert("Withdraw request rejected.");
-          loadWithdrawRequests();
-          return;
-        }
-
-        // If approve, deduct balance from user and update withdraw status
         const userDocRef = doc(db, "users", wdData.uid);
         const userDocSnap = await getDoc(userDocRef);
 
@@ -289,25 +280,26 @@
         }
 
         const userData = userDocSnap.data();
-        if ((userData.balance || 0) < (wdData.amount || 0)) {
-          alert("User does not have enough balance to approve this withdraw.");
-          return;
+
+        if (action === "approved") {
+          // Approve without deducting balance
+          await updateDoc(wdDocRef, { status: "approved" });
+
+          alert("Withdraw request approved (balance not deducted).");
+        } else if (action === "rejected") {
+          // On reject, return balance only if previously approved (in this logic since status was pending, no deduction yet)
+          // But since only pending requests are processed here, we just update status to rejected.
+          // If you want to support rejecting after approval, logic must change.
+          await updateDoc(wdDocRef, { status: "rejected" });
+          alert("Withdraw request rejected.");
         }
 
-        // Deduct balance
-        const newBalance = (userData.balance || 0) - (wdData.amount || 0);
-        await updateDoc(userDocRef, { balance: newBalance });
-
-        // Update withdraw status
-        await updateDoc(wdDocRef, { status: "approved" });
-
-        alert("Withdraw request approved and balance updated.");
-        loadWithdrawRequests();
-        loadWithdrawHistory();
-        loadUsers();
+        // Reload withdraw requests and users to reflect changes
+        await loadWithdrawRequests();
+        await loadUsers();
 
       } catch (err) {
-        alert("Failed to process withdraw request: " + err.message);
+        alert("Error processing withdraw request: " + err.message);
         console.error(err);
       }
     }
@@ -320,7 +312,7 @@
         const snapshot = await getDocs(q);
 
         if (snapshot.empty) {
-          withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center">No approved withdraws found.</td></tr>`;
+          withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center">No withdraw history found.</td></tr>`;
           return;
         }
 
@@ -328,7 +320,6 @@
         snapshot.forEach(docSnap => {
           const wd = docSnap.data();
           const dateStr = wd.timestamp?.toDate ? wd.timestamp.toDate().toLocaleString() : "N/A";
-
           rowsHtml += `
             <tr class="border-t border-gray-200 hover:bg-gray-50">
               <td class="p-3 border border-gray-300">${wd.userEmail || "N/A"}</td>
@@ -341,41 +332,24 @@
         withdrawHistoryBody.innerHTML = rowsHtml;
 
       } catch (err) {
-        withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-red-600">Error loading withdraw history: ${err.message}</td></tr>`;
+        withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-red-600">Error loading history: ${err.message}</td></tr>`;
         console.error(err);
       }
     }
 
-    // Check Admin on auth state changed
-    onAuthStateChanged(auth, async user => {
+    onAuthStateChanged(auth, user => {
       if (!user) {
         window.location.href = "login.html";
         return;
       }
 
-      // Check if user is admin
-      const userDocRef = doc(db, "users", user.uid);
-      const userDocSnap = await getDoc(userDocRef);
-      if (!userDocSnap.exists()) {
-        alert("User data not found.");
-        await signOut(auth);
-        window.location.href = "login.html";
-        return;
-      }
-      const userData = userDocSnap.data();
-
-      if (userData.role !== "admin") {
-        alert("Access denied: Admins only.");
-        await signOut(auth);
-        window.location.href = "login.html";
-        return;
-      }
-
-      // Load initial data
-      await loadUsers();
-      await loadWithdrawRequests();
-      await loadWithdrawHistory();
+      // Optionally, check if user is admin here by reading user doc
+      
+      loadUsers();
+      loadWithdrawRequests();
+      loadWithdrawHistory();
     });
   </script>
+
 </body>
 </html>
