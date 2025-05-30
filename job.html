@@ -1,26 +1,32 @@
-<!-- tasks.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" >
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Complete Tasks</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>User Tasks</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body class="bg-gray-50 text-gray-900">
 
-  <main class="max-w-2xl mx-auto p-6">
-    <h1 class="text-2xl font-bold mb-6 text-center">🎯 Complete Tasks & Earn ৳5</h1>
+  <main class="max-w-3xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6 text-center">📋 Your Tasks</h1>
+    <p class="mb-6 text-center text-gray-700">Complete tasks below to earn 5৳ each!</p>
 
-    <div id="tasksContainer" class="space-y-4"></div>
-
-    <div class="text-center mt-6">
-      <a href="dashboard.html" class="text-blue-600 hover:underline">← Back to Dashboard</a>
+    <div id="tasksContainer" class="space-y-4">
+      <p>Loading tasks...</p>
     </div>
   </main>
 
   <script type="module">
-    // Firebase config (same as in dashboard)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getFirestore, collection, getDocs, doc, updateDoc, getDoc, setDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import {
+      getAuth, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
       authDomain: "bdwork-346d3.firebaseapp.com",
@@ -31,78 +37,131 @@
       measurementId: "G-FM1YJ8E5GK"
     };
 
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import {
-      getFirestore, doc, getDoc, updateDoc
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
     const db = getFirestore(app);
+    const auth = getAuth(app);
 
-    const tasks = [
-      { id: "task1", name: "Upload Screenshot for Task 1" },
-      { id: "task2", name: "Complete Task 2" },
-      { id: "task3", name: "Complete Task 3" },
-      { id: "task4", name: "Complete Task 4" }
-    ];
+    const tasksContainer = document.getElementById("tasksContainer");
+    const tasksCol = collection(db, "tasks");
 
-    let currentUserData = null;
+    let currentUser = null;
+    let tasksData = [];
+    let completedTasks = new Set();
 
-    function renderTasks(tasksCompleted = {}) {
-      const container = document.getElementById("tasksContainer");
-      container.innerHTML = "";
-      tasks.forEach(task => {
-        const done = tasksCompleted[task.id] === true;
-        const btn = document.createElement("button");
-        btn.className = done
-          ? "w-full bg-gray-400 text-white py-3 rounded-lg cursor-not-allowed font-semibold"
-          : "w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 font-semibold";
-        btn.innerText = done ? `${task.name} ✓ Completed` : `Complete ${task.name} (+৳5)`;
-        btn.disabled = done;
-        btn.onclick = () => completeTask(task.id);
-        container.appendChild(btn);
+    // Utility: Update user's balance by amount (increment)
+    async function updateUserBalance(uid, amount) {
+      const userDocRef = doc(db, "users", uid);
+      const userSnap = await getDoc(userDocRef);
+
+      if (!userSnap.exists()) {
+        throw new Error("User document not found");
+      }
+
+      const userData = userSnap.data();
+      const newBalance = (userData.balance || 0) + amount;
+
+      await updateDoc(userDocRef, { balance: newBalance });
+      return newBalance;
+    }
+
+    // Load completed tasks list for current user
+    async function loadCompletedTasks(uid) {
+      const completedTasksRef = collection(db, "users", uid, "completedTasks");
+      const snapshot = await getDocs(completedTasksRef);
+      completedTasks.clear();
+      snapshot.forEach(docSnap => {
+        completedTasks.add(docSnap.id);
       });
     }
 
+    // Mark task as completed: record under user's completedTasks subcollection + update balance
     async function completeTask(taskId) {
-      if (!currentUserData) return alert("User data not loaded.");
-      if (currentUserData.tasksCompleted?.[taskId]) return alert("Task already completed.");
+      if (!currentUser) {
+        alert("User not logged in!");
+        return;
+      }
+      if (completedTasks.has(taskId)) {
+        alert("Task already completed!");
+        return;
+      }
 
       try {
-        const userDocRef = doc(db, "users", currentUserData.uid);
-        await updateDoc(userDocRef, {
-          [`tasksCompleted.${taskId}`]: true,
-          balance: (currentUserData.balance || 0) + 5
-        });
+        // Record completion
+        const completionDoc = doc(db, "users", currentUser.uid, "completedTasks", taskId);
+        await setDoc(completionDoc, { completedAt: new Date() });
 
-        currentUserData.tasksCompleted = currentUserData.tasksCompleted || {};
-        currentUserData.tasksCompleted[taskId] = true;
-        currentUserData.balance = (currentUserData.balance || 0) + 5;
+        // Add 5৳ reward
+        await updateUserBalance(currentUser.uid, 5);
 
-        renderTasks(currentUserData.tasksCompleted);
-        alert("Task completed! ৳5 added.");
-      } catch (err) {
-        alert("Error: " + err.message);
+        completedTasks.add(taskId);
+        renderTasks();
+
+        alert("Task completed! You earned 5৳.");
+      } catch (error) {
+        alert("Error completing task: " + error.message);
       }
     }
 
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) return window.location.href = "login.html";
-
-      try {
-        const userDocRef = doc(db, "users", user.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-          const data = userDoc.data();
-          currentUserData = { uid: user.uid, ...data };
-          renderTasks(data.tasksCompleted || {});
-        }
-      } catch (err) {
-        alert("Failed to load user data: " + err.message);
+    // Render task list with complete buttons
+    function renderTasks() {
+      if (tasksData.length === 0) {
+        tasksContainer.innerHTML = "<p>No tasks available.</p>";
+        return;
       }
+
+      tasksContainer.innerHTML = "";
+      tasksData.forEach(task => {
+        const taskDiv = document.createElement("div");
+        taskDiv.className = "p-4 bg-white rounded shadow flex justify-between items-center";
+
+        const taskInfo = document.createElement("div");
+        taskInfo.innerHTML = `<p class="font-semibold">${task.name}</p>` + 
+          (task.description ? `<p class="text-sm text-gray-600">${task.description}</p>` : "");
+
+        const btn = document.createElement("button");
+        btn.className = completedTasks.has(task.id)
+          ? "bg-green-600 text-white px-4 py-2 rounded cursor-default"
+          : "bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition";
+
+        btn.innerText = completedTasks.has(task.id) ? "Completed" : "Complete";
+        btn.disabled = completedTasks.has(task.id);
+        btn.onclick = () => {
+          if (!btn.disabled) completeTask(task.id);
+        };
+
+        taskDiv.appendChild(taskInfo);
+        taskDiv.appendChild(btn);
+
+        tasksContainer.appendChild(taskDiv);
+      });
+    }
+
+    // Load all tasks and user completion status
+    async function loadTasksForUser(uid) {
+      try {
+        const snapshot = await getDocs(tasksCol);
+        tasksData = [];
+        snapshot.forEach(docSnap => {
+          tasksData.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        await loadCompletedTasks(uid);
+        renderTasks();
+      } catch (error) {
+        tasksContainer.innerHTML = `<p class="text-red-600">Failed to load tasks: ${error.message}</p>`;
+      }
+    }
+
+    // Auth state change: load tasks for logged-in user
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        alert("Please log in to access your tasks.");
+        window.location.href = "login.html";
+        return;
+      }
+      currentUser = user;
+      loadTasksForUser(user.uid);
     });
   </script>
+
 </body>
 </html>
