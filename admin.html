@@ -5,301 +5,159 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Admin Panel</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@latest/dist/tailwind.min.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 </head>
-<body class="bg-white text-gray-800 p-6 font-sans">
+<body class="bg-gray-100 min-h-screen flex flex-col">
 
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold">Admin Panel</h1>
-    <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Logout</button>
-  </div>
+  <header class="bg-blue-600 text-white p-4 flex justify-between items-center">
+    <h1 class="text-xl font-bold">Admin Panel</h1>
+    <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded flex items-center gap-2">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </button>
+  </header>
 
-  <div class="mb-6 text-sm text-gray-500">Version 1.4</div>
+  <main class="flex-grow container mx-auto p-6">
+    <h2 class="text-2xl font-semibold mb-4">Welcome, <span id="adminName">Admin</span></h2>
 
-  <h2 class="text-xl font-semibold mb-2">Users</h2>
-  <div class="overflow-x-auto">
-    <table class="w-full table-auto border border-gray-300 mb-8 text-sm">
-      <thead class="bg-gray-100">
-        <tr>
-          <th class="border p-2">Email</th>
-          <th class="border p-2">Role</th>
-          <th class="border p-2">Balance (৳)</th>
-          <th class="border p-2">Change Email</th>
-          <th class="border p-2">Change Role</th>
-          <th class="border p-2">Change Balance</th>
-          <th class="border p-2">Send Reset</th>
-          <th class="border p-2">Action</th>
-        </tr>
-      </thead>
-      <tbody id="usersTableBody"></tbody>
-    </table>
-  </div>
+    <section class="bg-white p-4 rounded shadow">
+      <h3 class="text-xl font-semibold mb-3">Withdraw Requests</h3>
+      <div id="withdrawList" class="space-y-3">
+        <!-- Withdraw requests will be listed here -->
+      </div>
+    </section>
+  </main>
 
-  <h2 class="text-xl font-semibold mb-2">Pending Withdraw Requests</h2>
-  <div class="overflow-x-auto mb-6">
-    <table class="w-full table-auto border border-gray-300 text-sm">
-      <thead class="bg-gray-100">
-        <tr>
-          <th class="border p-2">User Email</th>
-          <th class="border p-2">Amount (৳)</th>
-          <th class="border p-2">Status</th>
-          <th class="border p-2">Request Date</th>
-          <th class="border p-2">Actions</th>
-        </tr>
-      </thead>
-      <tbody id="withdrawTableBody"></tbody>
-    </table>
-  </div>
-
-  <h2 class="text-xl font-semibold mb-2">Withdrawal History</h2>
-  <div class="overflow-x-auto">
-    <table class="w-full table-auto border border-gray-300 text-sm">
-      <thead class="bg-gray-100">
-        <tr>
-          <th class="border p-2">User Email</th>
-          <th class="border p-2">Amount (৳)</th>
-          <th class="border p-2">Status</th>
-          <th class="border p-2">Processed Date</th>
-        </tr>
-      </thead>
-      <tbody id="withdrawHistoryBody"></tbody>
-    </table>
-  </div>
-
-  <div id="message" class="mt-4 font-semibold"></div>
+  <footer class="bg-blue-600 text-white text-center p-3">
+    &copy; 2025 Your Company
+  </footer>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, doc, updateDoc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyAPF4nGlb9R2osmXUwrPgatwAl1huIAGpg",
-      authDomain: "admin-and-user-f50c3.firebaseapp.com",
-      projectId: "admin-and-user-f50c3",
-      storageBucket: "admin-and-user-f50c3.firebasestorage.app",
-      messagingSenderId: "926355768153",
-      appId: "1:926355768153:web:d52c55b2daf0e85a6e8248",
-      measurementId: "G-7FES0VM8S1"
+      apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
+      authDomain: "bdwork-346d3.firebaseapp.com",
+      projectId: "bdwork-346d3",
+      storageBucket: "bdwork-346d3.appspot.com",
+      messagingSenderId: "900963179093",
+      appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
+      measurementId: "G-FM1YJ8E5GK"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const usersTableBody = document.getElementById("usersTableBody");
-    const withdrawTableBody = document.getElementById("withdrawTableBody");
-    const withdrawHistoryBody = document.getElementById("withdrawHistoryBody");
-    const messageDiv = document.getElementById("message");
+    const adminNameElem = document.getElementById("adminName");
+    const withdrawListElem = document.getElementById("withdrawList");
     const logoutBtn = document.getElementById("logoutBtn");
 
-    logoutBtn.onclick = async () => {
-      try {
-        await signOut(auth);
-        window.location.href = "index.html";
-      } catch (error) {
-        showMessage("Logout failed: " + error.message, "text-red-500");
-      }
-    };
-
-    onAuthStateChanged(auth, async user => {
-      if (!user) {
-        alert("Please login first.");
-        window.location.href = "index.html";
-        return;
-      }
-
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      if (!userDoc.exists() || userDoc.data().role !== "admin") {
-        alert("Access denied. Admins only.");
-        window.location.href = "index.html";
-        return;
-      }
-
-      await loadUsers();
-      await loadWithdrawRequests();
-      await loadWithdrawHistory();
+    logoutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "index.html"; // Login page
     });
 
-    async function loadUsers() {
-      usersTableBody.innerHTML = "";
-      messageDiv.textContent = "";
-
-      try {
-        const snapshot = await getDocs(collection(db, "users"));
-        snapshot.forEach(docSnap => {
-          const data = docSnap.data();
-          const tr = document.createElement("tr");
-
-          tr.innerHTML = `
-            <td class="border p-2">${data.email || "-"}</td>
-            <td class="border p-2">${data.role || "user"}</td>
-            <td class="border p-2">${(data.mainBalance !== undefined) ? data.mainBalance.toFixed(2) : "0.00"}</td>
-            <td class="border p-2"><input type="text" class="w-full p-1 border rounded" value="${data.email || ""}" /></td>
-            <td class="border p-2">
-              <select class="w-full p-1 border rounded">
-                <option value="user" ${data.role === "user" ? "selected" : ""}>User</option>
-                <option value="admin" ${data.role === "admin" ? "selected" : ""}>Admin</option>
-              </select>
-            </td>
-            <td class="border p-2"><input type="number" min="0" step="0.01" class="w-full p-1 border rounded" value="${data.mainBalance || 0}" /></td>
-            <td class="border p-2">
-              <button class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded">Send Reset</button>
-            </td>
-            <td class="border p-2">
-              <button class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded">Update</button>
-            </td>
-          `;
-
-          const [emailInput, roleSelect, balanceInput] = tr.querySelectorAll("input, select");
-          const resetBtn = tr.querySelector("td:nth-child(7) button");
-          const updateBtn = tr.querySelector("td:nth-child(8) button");
-
-          resetBtn.onclick = () => sendResetEmail(emailInput.value.trim());
-
-          updateBtn.onclick = async () => {
-            const newEmail = emailInput.value.trim();
-            const newRole = roleSelect.value;
-            const newBalance = parseFloat(balanceInput.value);
-
-            if (!newEmail) return showMessage("Email cannot be empty", "text-red-500");
-            if (isNaN(newBalance) || newBalance < 0) return showMessage("Invalid balance", "text-red-500");
-
-            try {
-              await updateDoc(doc(db, "users", docSnap.id), {
-                email: newEmail,
-                role: newRole,
-                mainBalance: newBalance
-              });
-              showMessage(`Updated user: ${newEmail}`, "text-green-600");
-              await loadUsers();
-            } catch (e) {
-              showMessage("Update failed: " + e.message, "text-red-500");
-            }
-          };
-
-          usersTableBody.appendChild(tr);
-        });
-      } catch (error) {
-        showMessage("Error loading users: " + error.message, "text-red-500");
+    // Check user login and role
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        alert("You must login first.");
+        window.location.href = "index.html"; // Login page
+        return;
       }
-    }
+
+      // Get user data to verify role
+      const userDocRef = doc(db, "users", user.uid);
+      const userSnap = await getDocs(collection(db, "users")); // Not needed, replaced below
+
+      const userDoc = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js")
+        .then(({ getDoc }) => getDoc(userDocRef));
+
+      if (!userDoc.exists()) {
+        alert("User data not found.");
+        await signOut(auth);
+        window.location.href = "index.html";
+        return;
+      }
+
+      const userData = userDoc.data();
+      if (userData.role !== "admin") {
+        alert("Access denied. Admins only.");
+        await signOut(auth);
+        window.location.href = "index.html";
+        return;
+      }
+
+      // Show admin name
+      adminNameElem.textContent = userData.name || "Admin";
+
+      // Load withdraw requests
+      loadWithdrawRequests();
+    });
 
     async function loadWithdrawRequests() {
-      withdrawTableBody.innerHTML = "";
-
+      withdrawListElem.innerHTML = "<p>Loading withdraw requests...</p>";
       try {
-        const q = query(collection(db, "withdrawRequests"), where("status", "==", "pending"));
-        const snapshot = await getDocs(q);
-
-        if (snapshot.empty) {
-          withdrawTableBody.innerHTML = `<tr><td colspan="5" class="text-center p-4 text-gray-500">No pending withdrawal requests.</td></tr>`;
+        const withdrawsCol = collection(db, "withdraws");
+        const withdrawsSnapshot = await getDocs(withdrawsCol);
+        if (withdrawsSnapshot.empty) {
+          withdrawListElem.innerHTML = "<p>No withdraw requests found.</p>";
           return;
         }
 
-        snapshot.forEach(docSnap => {
+        withdrawListElem.innerHTML = "";
+        withdrawsSnapshot.forEach((docSnap) => {
           const data = docSnap.data();
-          const tr = document.createElement("tr");
-          const date = data.requestDate?.toDate ? data.requestDate.toDate() : new Date();
+          const id = docSnap.id;
 
-          tr.innerHTML = `
-            <td class="border p-2">${data.email || "-"}</td>
-            <td class="border p-2">${data.amount?.toFixed(2) || "0.00"}</td>
-            <td class="border p-2">${data.status || "pending"}</td>
-            <td class="border p-2">${date.toLocaleString()}</td>
-            <td class="border p-2 flex gap-2">
-              <button class="approve bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded">Approve</button>
-              <button class="reject bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded">Reject</button>
-            </td>
+          const statusColor = data.status === "approved" ? "green" : data.status === "rejected" ? "red" : "gray";
+
+          const item = document.createElement("div");
+          item.className = `border p-3 rounded flex justify-between items-center bg-${statusColor}-100`;
+
+          item.innerHTML = `
+            <div>
+              <p><strong>User:</strong> ${data.userEmail || "Unknown"}</p>
+              <p><strong>Amount:</strong> $${data.amount}</p>
+              <p><strong>Status:</strong> <span class="capitalize text-${statusColor}-700">${data.status || "pending"}</span></p>
+            </div>
+            <div class="flex gap-2">
+              ${data.status === "pending" ? `
+                <button class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded" onclick="approveWithdraw('${id}')">Approve</button>
+                <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded" onclick="rejectWithdraw('${id}')">Reject</button>
+              ` : ""}
+            </div>
           `;
 
-          tr.querySelector(".approve").onclick = () => processWithdraw(docSnap.id, true);
-          tr.querySelector(".reject").onclick = () => processWithdraw(docSnap.id, false);
-
-          withdrawTableBody.appendChild(tr);
+          withdrawListElem.appendChild(item);
         });
       } catch (error) {
-        showMessage("Error loading withdraw requests: " + error.message, "text-red-500");
+        withdrawListElem.innerHTML = `<p class="text-red-600">Error loading requests: ${error.message}</p>`;
       }
     }
 
-    async function loadWithdrawHistory() {
-      withdrawHistoryBody.innerHTML = "";
-
+    window.approveWithdraw = async function(withdrawId) {
       try {
-        const q = query(collection(db, "withdrawRequests"), where("status", "!=", "pending"));
-        const snapshot = await getDocs(q);
-
-        if (snapshot.empty) {
-          withdrawHistoryBody.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-gray-500">No history available.</td></tr>`;
-          return;
-        }
-
-        snapshot.forEach(docSnap => {
-          const data = docSnap.data();
-          const tr = document.createElement("tr");
-
-          const processedDate = data.processedAt?.toDate ? data.processedAt.toDate() : new Date();
-
-          tr.innerHTML = `
-            <td class="border p-2">${data.email || "-"}</td>
-            <td class="border p-2">${data.amount?.toFixed(2) || "0.00"}</td>
-            <td class="border p-2 capitalize">${data.status || "-"}</td>
-            <td class="border p-2">${processedDate.toLocaleString()}</td>
-          `;
-
-          withdrawHistoryBody.appendChild(tr);
-        });
+        const withdrawDocRef = doc(db, "withdraws", withdrawId);
+        await updateDoc(withdrawDocRef, { status: "approved" });
+        alert("Withdraw request approved.");
+        loadWithdrawRequests();
       } catch (error) {
-        showMessage("Error loading withdraw history: " + error.message, "text-red-500");
+        alert("Failed to approve: " + error.message);
       }
     }
 
-    async function processWithdraw(id, approve) {
-      const ref = doc(db, "withdrawRequests", id);
-
+    window.rejectWithdraw = async function(withdrawId) {
       try {
-        const snap = await getDoc(ref);
-        if (!snap.exists()) return showMessage("Request not found", "text-red-500");
-
-        const data = snap.data();
-        if (data.status !== "pending") return showMessage("Already processed", "text-red-500");
-
-        if (approve) {
-          await updateDoc(ref, { status: "approved", processedAt: new Date() });
-          showMessage(`Approved ৳${data.amount.toFixed(2)} for ${data.email}`, "text-green-600");
-        } else {
-          const userRef = doc(db, "users", data.userId);
-          const userSnap = await getDoc(userRef);
-          if (!userSnap.exists()) return showMessage("User not found", "text-red-500");
-
-          const newBalance = (userSnap.data().mainBalance || 0) + (data.amount || 0);
-          await updateDoc(userRef, { mainBalance: newBalance });
-          await updateDoc(ref, { status: "rejected", processedAt: new Date() });
-
-          showMessage(`Rejected and refunded ৳${data.amount.toFixed(2)} to ${data.email}`, "text-yellow-600");
-        }
-
-        await loadWithdrawRequests();
-        await loadWithdrawHistory();
+        const withdrawDocRef = doc(db, "withdraws", withdrawId);
+        await updateDoc(withdrawDocRef, { status: "rejected" });
+        alert("Withdraw request rejected.");
+        loadWithdrawRequests();
       } catch (error) {
-        showMessage("Processing error: " + error.message, "text-red-500");
+        alert("Failed to reject: " + error.message);
       }
-    }
-
-    function showMessage(msg, colorClass) {
-      messageDiv.textContent = msg;
-      messageDiv.className = `mt-4 font-semibold ${colorClass}`;
-    }
-
-    function sendResetEmail(email) {
-      if (!email) return showMessage("Enter an email", "text-red-500");
-      sendPasswordResetEmail(auth, email)
-        .then(() => showMessage("Reset email sent to " + email, "text-green-600"))
-        .catch((e) => showMessage("Error: " + e.message, "text-red-500"));
     }
   </script>
-
 </body>
 </html>
