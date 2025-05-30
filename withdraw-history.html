@@ -1,0 +1,79 @@
+<!-- withdraw-history.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Withdraw History</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <main class="max-w-2xl mx-auto p-4">
+    <h1 class="text-2xl font-bold mb-6 text-center">📜 Withdraw History</h1>
+    <div id="withdrawHistory" class="space-y-2">
+      <p class="text-sm text-gray-500 text-center">Loading history...</p>
+    </div>
+    <div class="text-center mt-6">
+      <a href="dashboard.html" class="text-blue-600 hover:underline">← Back to Dashboard</a>
+    </div>
+  </main>
+
+  <script type="module">
+    const firebaseConfig = {
+      apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
+      authDomain: "bdwork-346d3.firebaseapp.com",
+      projectId: "bdwork-346d3",
+      storageBucket: "bdwork-346d3.appspot.com",
+      messagingSenderId: "900963179093",
+      appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
+      measurementId: "G-FM1YJ8E5GK"
+    };
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import {
+      getFirestore, collection, query, where, getDocs
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return window.location.href = "login.html";
+      const historyContainer = document.getElementById("withdrawHistory");
+
+      try {
+        const withdrawQuery = query(collection(db, "withdraws"), where("uid", "==", user.uid));
+        const withdrawSnap = await getDocs(withdrawQuery);
+
+        if (withdrawSnap.empty) {
+          historyContainer.innerHTML = '<p class="text-sm text-gray-500 text-center">No withdraw history found.</p>';
+        } else {
+          historyContainer.innerHTML = "";
+          withdrawSnap.forEach(doc => {
+            const data = doc.data();
+            const date = data.timestamp?.toDate().toLocaleString() || "Unknown time";
+            const item = document.createElement("div");
+            item.className = "bg-white p-3 rounded-md shadow-sm flex justify-between items-center text-sm";
+            item.innerHTML = `
+              <div>
+                <p class="font-medium text-gray-700">৳${data.amount}</p>
+                <p class="text-xs text-gray-500">${date}</p>
+              </div>
+              <span class="text-xs px-2 py-1 rounded-full ${
+                data.status === "approved" ? "bg-green-100 text-green-700" :
+                data.status === "rejected" ? "bg-red-100 text-red-700" :
+                "bg-yellow-100 text-yellow-700"
+              }">${data.status}</span>
+            `;
+            historyContainer.appendChild(item);
+          });
+        }
+      } catch (err) {
+        historyContainer.innerHTML = '<p class="text-sm text-red-500 text-center">Error loading history.</p>';
+      }
+    });
+  </script>
+</body>
+</html>
