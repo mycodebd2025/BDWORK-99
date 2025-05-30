@@ -72,7 +72,7 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    let currentUserData = null; // to keep user data for updates
+    let currentUserData = null;
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
@@ -121,16 +121,15 @@
       }
 
       try {
-        // Create new withdraw request doc in 'withdraws' collection with status pending
         await addDoc(collection(db, "withdraws"), {
           uid: currentUserData.uid,
+          userId: currentUserData.uid, // ✅ Added for indexing and admin query
           userEmail: currentUserData.email,
           amount: amount,
           timestamp: Timestamp.now(),
           status: "pending"
         });
 
-        // Update user balance after withdraw request
         const userDocRef = doc(db, "users", currentUserData.uid);
         const newBalance = currentBalance - amount;
         await updateDoc(userDocRef, { balance: newBalance });
