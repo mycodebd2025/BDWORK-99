@@ -1,259 +1,261 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin Panel</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Panel</title>
 
-  <!-- TailwindCSS & FontAwesome -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
-
+  <!-- TailwindCSS & FontAwesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
 
-  <header class="bg-blue-600 text-white p-4 flex justify-between items-center">
-    <h1 class="text-xl font-bold">Admin Panel</h1>
-    <button id="logoutBtn" class="bg-red-600 px-4 py-2 rounded hover:bg-red-700 flex items-center">
-      <i class="fas fa-sign-out-alt mr-2"></i> Logout
-    </button>
-  </header>
+  <header class="bg-blue-600 text-white p-4 flex justify-between items-center">
+    <h1 class="text-xl font-bold">Admin Panel</h1>
+    <button id="logoutBtn" class="bg-red-600 px-4 py-2 rounded hover:bg-red-700 flex items-center">
+      <i class="fas fa-sign-out-alt mr-2"></i> Logout
+    </button>
+  </header>
 
-  <main class="flex-grow p-6 max-w-6xl mx-auto w-full space-y-10">
+  <main class="flex-grow p-6 max-w-6xl mx-auto w-full space-y-10">
 
-    <section>
-      <h2 class="text-2xl font-semibold mb-6">Users Management</h2>
+    <section>
+      <h2 class="text-2xl font-semibold mb-6">Users Management</h2>
 
-      <!-- Scrollable container for horizontal scroll -->
-      <div class="overflow-x-auto border rounded shadow bg-white">
-        <table class="w-full min-w-[700px] border-collapse border border-gray-300">
-          <thead class="bg-gray-200 sticky top-0 z-10">
-            <tr>
-              <th class="p-3 border border-gray-300 text-left">Email</th>
-              <th class="p-3 border border-gray-300 text-left">Balance (৳)</th>
-              <th class="p-3 border border-gray-300 text-left">Role</th>
-              <th class="p-3 border border-gray-300 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="usersTableBody">
-            <tr><td colspan="4" class="p-4 text-center text-gray-500">Loading users...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+      <div class="overflow-x-auto border rounded shadow bg-white">
+        <table class="w-full min-w-[700px] border-collapse border border-gray-300">
+          <thead class="bg-gray-200 sticky top-0 z-10">
+            <tr>
+              <th class="p-3 border border-gray-300 text-left">Email</th>
+              <th class="p-3 border border-gray-300 text-left">Balance (৳)</th>
+              <th class="p-3 border border-gray-300 text-left">Role</th>
+              <th class="p-3 border border-gray-300 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody">
+            <tr>
+              <td colspan="4" class="p-4 text-center text-gray-500">Loading users...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
-    <section>
-      <h2 class="text-2xl font-semibold mb-6">Withdraw History</h2>
+    <section>
+      <h2 class="text-2xl font-semibold mb-6">Withdraw History</h2>
 
-      <div class="overflow-x-auto border rounded shadow bg-white max-h-80">
-        <table class="w-full min-w-[500px] border-collapse border border-gray-300">
-          <thead class="bg-gray-200 sticky top-0 z-10">
-            <tr>
-              <th class="p-3 border border-gray-300 text-left">User Email</th>
-              <th class="p-3 border border-gray-300 text-left">Amount (৳)</th>
-              <th class="p-3 border border-gray-300 text-left">Date & Time</th>
-            </tr>
-          </thead>
-          <tbody id="withdrawHistoryBody">
-            <tr><td colspan="3" class="p-4 text-center text-gray-500">Loading withdraw history...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+      <div class="overflow-x-auto border rounded shadow bg-white max-h-80 overflow-y-auto">
+        <table class="w-full min-w-[500px] border-collapse border border-gray-300">
+          <thead class="bg-gray-200 sticky top-0 z-10">
+            <tr>
+              <th class="p-3 border border-gray-300 text-left">User Email</th>
+              <th class="p-3 border border-gray-300 text-left">Amount (৳)</th>
+              <th class="p-3 border border-gray-300 text-left">Date & Time</th>
+            </tr>
+          </thead>
+          <tbody id="withdrawHistoryBody">
+            <tr>
+              <td colspan="3" class="p-4 text-center text-gray-500">Loading withdraw history...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
-  </main>
+  </main>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import {
-      getAuth,
-      onAuthStateChanged,
-      signOut,
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import {
-      getFirestore,
-      collection,
-      getDocs,
-      doc,
-      getDoc,
-      updateDoc,
-      query,
-      orderBy,
-      limit,
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signOut,
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      doc,
+      getDoc,
+      updateDoc,
+      query,
+      orderBy,
+      limit,
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // Firebase Config
-    const firebaseConfig = {
-      apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
-      authDomain: "bdwork-346d3.firebaseapp.com",
-      projectId: "bdwork-346d3",
-      storageBucket: "bdwork-346d3.appspot.com",
-      messagingSenderId: "900963179093",
-      appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
-      measurementId: "G-FM1YJ8E5GK"
-    };
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
+      authDomain: "bdwork-346d3.firebaseapp.com",
+      projectId: "bdwork-346d3",
+      storageBucket: "bdwork-346d3.appspot.com",
+      messagingSenderId: "900963179093",
+      appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
+      measurementId: "G-FM1YJ8E5GK"
+    };
 
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    const usersTableBody = document.getElementById("usersTableBody");
-    const withdrawHistoryBody = document.getElementById("withdrawHistoryBody");
-    const logoutBtn = document.getElementById("logoutBtn");
+    const usersTableBody = document.getElementById("usersTableBody");
+    const withdrawHistoryBody = document.getElementById("withdrawHistoryBody");
+    const logoutBtn = document.getElementById("logoutBtn");
 
-    logoutBtn.addEventListener("click", async () => {
-      await signOut(auth);
-      window.location.href = "login.html";
-    });
+    logoutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "login.html";
+    });
 
-    async function loadUsers() {
-      usersTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">Loading users...</td></tr>`;
-      try {
-        const usersCol = collection(db, "users");
-        const usersSnapshot = await getDocs(usersCol);
+    async function loadUsers() {
+      usersTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">Loading users...</td></tr>`;
+      try {
+        const usersCol = collection(db, "users");
+        const usersSnapshot = await getDocs(usersCol);
 
-        if (usersSnapshot.empty) {
-          usersTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">No users found.</td></tr>`;
-          return;
-        }
+        if (usersSnapshot.empty) {
+          usersTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">No users found.</td></tr>`;
+          return;
+        }
 
-        let rowsHtml = "";
-        usersSnapshot.forEach((docSnap) => {
-          const user = docSnap.data();
-          rowsHtml += `
-            <tr class="border-t border-gray-200 hover:bg-gray-50">
-              <td class="p-3 border border-gray-300 break-words max-w-xs">${user.email || "N/A"}</td>
-              <td class="p-3 border border-gray-300">
-                <input type="number" min="0" step="0.01" value="${user.balance || 0}" class="balance-input border rounded px-2 py-1 w-28" data-uid="${docSnap.id}" />
-              </td>
-              <td class="p-3 border border-gray-300">
-                <select class="role-select border rounded px-2 py-1" data-uid="${docSnap.id}">
-                  <option value="user" ${user.role === "user" ? "selected" : ""}>User</option>
-                  <option value="admin" ${user.role === "admin" ? "selected" : ""}>Admin</option>
-                </select>
-              </td>
-              <td class="p-3 border border-gray-300 text-center">
-                <button class="update-balance-btn bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded" data-uid="${docSnap.id}">
-                  Update
-                </button>
-              </td>
-            </tr>
-          `;
-        });
+        let rowsHtml = "";
+        usersSnapshot.forEach((docSnap) => {
+          const user = docSnap.data();
+          rowsHtml += `
+            <tr class="border-t border-gray-200 hover:bg-gray-50">
+              <td class="p-3 border border-gray-300 break-words max-w-xs">${user.email || "N/A"}</td>
+              <td class="p-3 border border-gray-300">
+                <input type="number" min="0" step="0.01" value="${user.balance ?? 0}" class="balance-input border rounded px-2 py-1 w-28" data-uid="${docSnap.id}" />
+              </td>
+              <td class="p-3 border border-gray-300">
+                <select class="role-select border rounded px-2 py-1" data-uid="${docSnap.id}">
+                  <option value="user" ${user.role === "user" ? "selected" : ""}>User</option>
+                  <option value="admin" ${user.role === "admin" ? "selected" : ""}>Admin</option>
+                </select>
+              </td>
+              <td class="p-3 border border-gray-300 text-center">
+                <button class="update-balance-btn bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded" data-uid="${docSnap.id}">
+                  Update
+                </button>
+              </td>
+            </tr>
+          `;
+        });
 
-        usersTableBody.innerHTML = rowsHtml;
+        usersTableBody.innerHTML = rowsHtml;
 
-        // Update role event
-        document.querySelectorAll(".role-select").forEach(select => {
-          select.addEventListener("change", async (e) => {
-            const uid = e.target.getAttribute("data-uid");
-            const newRole = e.target.value;
-            try {
-              await updateDoc(doc(db, "users", uid), { role: newRole });
-              alert(`User role updated to "${newRole}"`);
-            } catch (err) {
-              alert("Failed to update role: " + err.message);
-              console.error(err);
-            }
-          });
-        });
+        // Attach role change listeners
+        document.querySelectorAll(".role-select").forEach(select => {
+          select.addEventListener("change", async (e) => {
+            const uid = e.target.getAttribute("data-uid");
+            const newRole = e.target.value;
+            try {
+              await updateDoc(doc(db, "users", uid), { role: newRole });
+              alert(`User role updated to "${newRole}"`);
+            } catch (err) {
+              alert("Failed to update role: " + err.message);
+              console.error(err);
+            }
+          });
+        });
 
-        // Update balance event
-        document.querySelectorAll(".update-balance-btn").forEach(btn => {
-          btn.addEventListener("click", async (e) => {
-            const uid = e.target.getAttribute("data-uid");
-            const input = document.querySelector(`.balance-input[data-uid="${uid}"]`);
-            const newBalance = parseFloat(input.value);
-            if (isNaN(newBalance) || newBalance < 0) {
-              alert("Please enter a valid non-negative balance.");
-              return;
-            }
-            try {
-              await updateDoc(doc(db, "users", uid), { balance: newBalance });
-              alert("Balance updated successfully.");
-            } catch (err) {
-              alert("Failed to update balance: " + err.message);
-              console.error(err);
-            }
-          });
-        });
+        // Attach balance update listeners
+        document.querySelectorAll(".update-balance-btn").forEach(btn => {
+          btn.addEventListener("click", async (e) => {
+            const uid = e.target.getAttribute("data-uid");
+            const input = document.querySelector(`.balance-input[data-uid="${uid}"]`);
+            const newBalance = parseFloat(input.value);
+            if (isNaN(newBalance) || newBalance < 0) {
+              alert("Please enter a valid non-negative balance.");
+              return;
+            }
+            try {
+              await updateDoc(doc(db, "users", uid), { balance: newBalance });
+              alert("Balance updated successfully.");
+            } catch (err) {
+              alert("Failed to update balance: " + err.message);
+              console.error(err);
+            }
+          });
+        });
 
-      } catch (error) {
-        usersTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-600">Error loading users: ${error.message}</td></tr>`;
-        console.error("Error loading users:", error);
-      }
-    }
+      } catch (error) {
+        usersTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-600">Error loading users: ${error.message}</td></tr>`;
+        console.error("Error loading users:", error);
+      }
+    }
 
-    async function loadWithdrawHistory() {
-      withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-500">Loading withdraw history...</td></tr>`;
-      try {
-        const withdrawsCol = collection(db, "withdraws");
-        // Get latest 50 withdraws ordered by timestamp descending
-        const q = query(withdrawsCol, orderBy("timestamp", "desc"), limit(50));
-        const withdrawsSnapshot = await getDocs(q);
+    async function loadWithdrawHistory() {
+      withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-500">Loading withdraw history...</td></tr>`;
+      try {
+        const withdrawsCol = collection(db, "withdraws");
+        // Get latest 50 withdraws ordered by timestamp descending
+        const q = query(withdrawsCol, orderBy("timestamp", "desc"), limit(50));
+        const withdrawsSnapshot = await getDocs(q);
 
-        if (withdrawsSnapshot.empty) {
-          withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center">No withdraw history found.</td></tr>`;
-          return;
-        }
+        if (withdrawsSnapshot.empty) {
+          withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center">No withdraw history found.</td></tr>`;
+          return;
+        }
 
-        let rowsHtml = "";
-        withdrawsSnapshot.forEach(docSnap => {
-          const wd = docSnap.data();
-          // Format date & time nicely
-          let dtStr = "N/A";
-          if (wd.timestamp && wd.timestamp.toDate) {
-            dtStr = wd.timestamp.toDate().toLocaleString();
-          }
-          rowsHtml += `
-            <tr class="border-t border-gray-200 hover:bg-gray-50">
-              <td class="p-3 border border-gray-300 break-words max-w-xs">${wd.email || "N/A"}</td>
-              <td class="p-3 border border-gray-300">${wd.amount || 0}</td>
-              <td class="p-3 border border-gray-300">${dtStr}</td>
-            </tr>
-          `;
-        });
+        let rowsHtml = "";
+        withdrawsSnapshot.forEach(docSnap => {
+          const wd = docSnap.data();
+          // Format date & time nicely
+          let dtStr = "N/A";
+          if (wd.timestamp && wd.timestamp.toDate) {
+            dtStr = wd.timestamp.toDate().toLocaleString();
+          }
+          rowsHtml += `
+            <tr class="border-t border-gray-200 hover:bg-gray-50">
+              <td class="p-3 border border-gray-300 break-words max-w-xs">${wd.email || "N/A"}</td>
+              <td class="p-3 border border-gray-300">${wd.amount ?? 0}</td>
+              <td class="p-3 border border-gray-300">${dtStr}</td>
+            </tr>
+          `;
+        });
 
-        withdrawHistoryBody.innerHTML = rowsHtml;
+        withdrawHistoryBody.innerHTML = rowsHtml;
 
-      } catch (err) {
-        withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-red-600">Error loading withdraw history: ${err.message}</td></tr>`;
-        console.error("Error loading withdraw history:", err);
-      }
-    }
+      } catch (err) {
+        withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-red-600">Error loading withdraw history: ${err.message}</td></tr>`;
+        console.error("Error loading withdraw history:", err);
+      }
+    }
 
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        alert("Please login first.");
-        window.location.href = "login.html";
-        return;
-      }
-      try {
-        const userDocRef = doc(db, "users", user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-        if (!userDocSnap.exists()) {
-          alert("User data not found.");
-          await signOut(auth);
-          window.location.href = "login.html";
-          return;
-        }
-        const userData = userDocSnap.data();
-        if (userData.role !== "admin") {
-          alert("Access denied: You are not an admin.");
-          await signOut(auth);
-          window.location.href = "login.html";
-          return;
-        }
-        await loadUsers();
-        await loadWithdrawHistory();
-      } catch (err) {
-        console.error("Error checking user role:", err);
-        alert("Error checking user role: " + err.message);
-        await signOut(auth);
-        window.location.href = "login.html";
-      }
-    });
-  </script>
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        alert("Please login first.");
+        window.location.href = "login.html";
+        return;
+      }
+      try {
+        const userDocRef = doc(db, "users", user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (!userDocSnap.exists()) {
+          alert("User data not found.");
+          await signOut(auth);
+          window.location.href = "login.html";
+          return;
+        }
+        const userData = userDocSnap.data();
+        if (userData.role !== "admin") {
+          alert("Access denied: You are not an admin.");
+          await signOut(auth);
+          window.location.href = "login.html";
+          return;
+        }
+        await loadUsers();
+        await loadWithdrawHistory();
+      } catch (err) {
+        console.error("Error checking user role:", err);
+        alert("Error checking user role: " + err.message);
+        await signOut(auth);
+        window.location.href = "login.html";
+      }
+    });
+  </script>
 </body>
 </html>
