@@ -59,6 +59,14 @@
       </button>
     </div>
 
+    <!-- Withdraw History -->
+    <div class="pt-4 border-t border-gray-200">
+      <h3 class="text-lg font-semibold text-gray-800 mb-2">Withdraw History</h3>
+      <div id="withdrawHistory" class="space-y-2 max-h-52 overflow-y-auto">
+        <p class="text-sm text-gray-500">Loading...</p>
+      </div>
+    </div>
+
     <button onclick="logout()" class="w-full bg-red-600 text-white py-2 rounded-md hover:bg-red-700">
       <i class="fas fa-sign-out-alt mr-1"></i> Logout
     </button>
@@ -79,13 +87,12 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import { 
-      getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, Timestamp 
+      getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, orderBy, Timestamp 
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-
     let currentUserData = null;
 
     onAuthStateChanged(auth, async (user) => {
@@ -108,11 +115,49 @@
           const referQuery = query(collection(db, "users"), where("referredBy", "==", user.uid));
           const referSnapshot = await getDocs(referQuery);
           document.getElementById("totalRefers").innerText = referSnapshot.size;
+
+          loadWithdrawHistory(user.uid);
         }
       } catch (err) {
         alert("Failed to load user data: " + err.message);
       }
     });
+
+    async function loadWithdrawHistory(uid) {
+      try {
+        const q = query(
+          collection(db, "withdraws"),
+          where("uid", "==", uid),
+          orderBy("timestamp", "desc")
+        );
+        const snapshot = await getDocs(q);
+        const historyDiv = document.getElementById("withdrawHistory");
+        historyDiv.innerHTML = "";
+
+        if (snapshot.empty) {
+          historyDiv.innerHTML = "<p class='text-sm text-gray-500'>No withdraw history found.</p>";
+          return;
+        }
+
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const date = data.timestamp?.toDate().toLocaleString() || "Unknown Date";
+          const entry = document.createElement("div");
+          entry.className = "p-3 rounded bg-gray-100 shadow-sm text-sm";
+
+          entry.innerHTML = `
+            <div class="flex justify-between">
+              <span class="font-medium">৳${data.amount}</span>
+              <span class="capitalize ${data.status === 'approved' ? 'text-green-600' : data.status === 'rejected' ? 'text-red-600' : 'text-yellow-600'}">${data.status}</span>
+            </div>
+            <div class="text-gray-500 text-xs">${date}</div>
+          `;
+          historyDiv.appendChild(entry);
+        });
+      } catch (err) {
+        document.getElementById("withdrawHistory").innerHTML = "<p class='text-sm text-red-500'>Failed to load history.</p>";
+      }
+    }
 
     window.withdraw = async function () {
       const amountInput = document.getElementById("withdrawAmount");
@@ -151,6 +196,10 @@
 
         document.getElementById("userBalance").innerText = `৳${newBalance}`;
         amountInput.value = "";
+
+        // Reload history
+        loadWithdrawHistory(currentUserData.uid);
+
         alert(`Withdraw request of ৳${amount} submitted successfully!`);
       } catch (err) {
         alert("Failed to process withdrawal: " + err.message);
