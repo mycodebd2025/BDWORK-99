@@ -10,22 +10,22 @@
 <body class="bg-gray-100 text-gray-900">
 
   <main class="max-w-4xl mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-6 text-center">🛠️ Admin Task Management</h1>
+    <h1 class="text-3xl font-bold mb-6 text-center">Admin Task Management</h1>
 
     <!-- Task Form -->
     <section class="mb-8 bg-white rounded shadow p-6">
       <h2 class="text-xl font-semibold mb-4">Add / Update Task</h2>
       <form id="taskForm" class="space-y-4">
-        <input type="hidden" id="taskId" value="" />
+        <input type="hidden" id="taskId" />
 
         <div>
           <label for="taskName" class="block font-medium mb-1">Task Name <span class="text-red-600">*</span></label>
-          <input id="taskName" type="text" required class="w-full border rounded px-3 py-2" placeholder="Enter task name" />
+          <input id="taskName" type="text" required class="w-full border rounded px-3 py-2" placeholder="Task name" />
         </div>
 
         <div>
           <label for="taskDescription" class="block font-medium mb-1">Description</label>
-          <textarea id="taskDescription" rows="2" class="w-full border rounded px-3 py-2" placeholder="Enter task description (optional)"></textarea>
+          <textarea id="taskDescription" rows="2" class="w-full border rounded px-3 py-2" placeholder="Description (optional)"></textarea>
         </div>
 
         <div>
@@ -49,9 +49,9 @@
       </form>
     </section>
 
-    <!-- Task List -->
+    <!-- Tasks List -->
     <section class="bg-white rounded shadow p-6">
-      <h2 class="text-xl font-semibold mb-4">All Tasks</h2>
+      <h2 class="text-xl font-semibold mb-4">Tasks List</h2>
       <div id="tasksList" class="space-y-4">
         <p>Loading tasks...</p>
       </div>
@@ -65,13 +65,12 @@
       collection,
       addDoc,
       doc,
-      getDocs,
+      onSnapshot,
       deleteDoc,
-      updateDoc,
-      onSnapshot
+      updateDoc
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // Your Firebase config here (replace with yours)
+    // Replace this config with your Firebase project config
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
       authDomain: "bdwork-346d3.firebaseapp.com",
@@ -84,6 +83,7 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const tasksCol = collection(db, "tasks");
 
     const taskForm = document.getElementById("taskForm");
     const taskIdInput = document.getElementById("taskId");
@@ -94,24 +94,20 @@
     const clearFormBtn = document.getElementById("clearFormBtn");
     const tasksList = document.getElementById("tasksList");
 
-    // Load and listen to tasks changes realtime
-    function listenTasks() {
-      const tasksCol = collection(db, "tasks");
-
-      onSnapshot(tasksCol, (snapshot) => {
-        tasksList.innerHTML = "";
-        if (snapshot.empty) {
-          tasksList.innerHTML = "<p>No tasks found.</p>";
-          return;
-        }
-        snapshot.forEach(docSnap => {
-          const task = { id: docSnap.id, ...docSnap.data() };
-          tasksList.appendChild(createTaskElement(task));
-        });
+    // Listen to tasks realtime
+    onSnapshot(tasksCol, (snapshot) => {
+      tasksList.innerHTML = "";
+      if (snapshot.empty) {
+        tasksList.innerHTML = "<p>No tasks found.</p>";
+        return;
+      }
+      snapshot.forEach(docSnap => {
+        const task = { id: docSnap.id, ...docSnap.data() };
+        tasksList.appendChild(createTaskElement(task));
       });
-    }
+    });
 
-    // Create task element in list
+    // Create a task card
     function createTaskElement(task) {
       const div = document.createElement("div");
       div.className = "p-4 border rounded flex flex-col md:flex-row md:justify-between md:items-center gap-4";
@@ -120,7 +116,7 @@
         <div>
           <p class="font-semibold text-lg">${task.name}</p>
           <p class="text-gray-600">${task.description || ""}</p>
-          <p class="text-indigo-600 font-semibold">Reward: ৳${task.reward.toFixed(2)}</p>
+          <p class="text-indigo-600 font-semibold">Reward: ৳${Number(task.reward).toFixed(2)}</p>
           <p class="text-blue-700 underline break-all">Link: <a href="${task.link}" target="_blank" rel="noopener noreferrer">${task.link}</a></p>
         </div>
       `;
@@ -140,12 +136,13 @@
 
       btnsDiv.appendChild(editBtn);
       btnsDiv.appendChild(deleteBtn);
+
       div.appendChild(btnsDiv);
 
       return div;
     }
 
-    // Populate form for editing a task
+    // Fill form to edit task
     function populateFormForEdit(task) {
       taskIdInput.value = task.id;
       taskNameInput.value = task.name;
@@ -164,8 +161,9 @@
       taskLinkInput.value = "";
       taskNameInput.focus();
     }
+    clearFormBtn.addEventListener("click", clearForm);
 
-    // Add or update task on form submit
+    // Submit form to add or update task
     taskForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
@@ -175,32 +173,21 @@
       const reward = parseFloat(taskRewardInput.value);
       const link = taskLinkInput.value.trim();
 
-      if (!name || isNaN(reward) || reward < 0 || !link) {
-        alert("Please fill all required fields with valid values.");
+      if (!name || !link || isNaN(reward) || reward < 0) {
+        alert("Please fill in all required fields with valid data.");
         return;
       }
 
       try {
         if (id) {
-          // Update existing task
-          const taskDocRef = doc(db, "tasks", id);
-          await updateDoc(taskDocRef, {
-            name,
-            description,
-            reward,
-            link
-          });
-          alert("Task updated successfully.");
+          // Update task
+          const docRef = doc(db, "tasks", id);
+          await updateDoc(docRef, { name, description, reward, link });
+          alert("Task updated.");
         } else {
           // Add new task
-          const tasksCol = collection(db, "tasks");
-          await addDoc(tasksCol, {
-            name,
-            description,
-            reward,
-            link
-          });
-          alert("Task added successfully.");
+          await addDoc(tasksCol, { name, description, reward, link });
+          alert("Task added.");
         }
         clearForm();
       } catch (err) {
@@ -209,20 +196,16 @@
     });
 
     // Delete task
-    async function deleteTask(taskId) {
+    async function deleteTask(id) {
       if (!confirm("Are you sure you want to delete this task?")) return;
       try {
-        await deleteDoc(doc(db, "tasks", taskId));
+        await deleteDoc(doc(db, "tasks", id));
         alert("Task deleted.");
       } catch (err) {
         alert("Error deleting task: " + err.message);
       }
     }
-
-    clearFormBtn.addEventListener("click", clearForm);
-
-    // Initialize task list listener
-    listenTasks();
   </script>
+
 </body>
 </html>
