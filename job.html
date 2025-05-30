@@ -6,43 +6,43 @@
   <title>Jobs</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
-  <main class="w-full max-w-2xl bg-white shadow-lg rounded-lg p-6 space-y-6">
-    <h2 class="text-2xl font-bold text-gray-800 text-center">📸 Job Submission</h2>
+<body class="bg-blue-50 min-h-screen p-6">
+  <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-md p-6 space-y-6">
+    <h1 class="text-2xl font-bold text-center text-gray-800">📸 Upload Screenshots to Earn Money</h1>
 
-    <div id="jobList" class="space-y-6">
-      <!-- Jobs will be inserted here -->
+    <div id="jobsContainer" class="space-y-6"></div>
+
+    <div class="text-center">
+      <button onclick="logout()" class="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+        Logout
+      </button>
     </div>
-
-    <button onclick="logout()" class="w-full bg-red-600 text-white py-2 rounded-md hover:bg-red-700">Logout</button>
-  </main>
+  </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, updateDoc, setDoc, collection, addDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
-
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
       authDomain: "bdwork-346d3.firebaseapp.com",
       projectId: "bdwork-346d3",
       storageBucket: "bdwork-346d3.appspot.com",
       messagingSenderId: "900963179093",
-      appId: "1:900963179093:web:81e42d67bb31d603cc92dc"
+      appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
+      measurementId: "G-FM1YJ8E5GK"
     };
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { 
+      getFirestore, doc, getDoc, updateDoc, collection, addDoc, Timestamp 
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
     const storage = getStorage(app);
 
-    const jobList = [
-      { id: "job1", title: "Job 1 - Like a Page" },
-      { id: "job2", title: "Job 2 - Join a Group" },
-      { id: "job3", title: "Job 3 - Follow on Instagram" },
-      { id: "job4", title: "Job 4 - Share a Post" },
-    ];
+    const jobCount = 4;
 
     let currentUser = null;
 
@@ -51,71 +51,62 @@
         window.location.href = "login.html";
         return;
       }
-
       currentUser = user;
       renderJobs();
     });
 
     function renderJobs() {
-      const container = document.getElementById("jobList");
-      jobList.forEach(job => {
-        const div = document.createElement("div");
-        div.className = "bg-gray-50 p-4 rounded-md shadow";
-
-        div.innerHTML = `
-          <h3 class="font-semibold text-lg mb-2">${job.title}</h3>
-          <input type="file" accept="image/*" id="${job.id}_file" class="mb-2" />
-          <button onclick="submitJob('${job.id}')" class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700">Submit</button>
-          <p id="${job.id}_status" class="text-sm text-gray-600 mt-2"></p>
+      const container = document.getElementById("jobsContainer");
+      for (let i = 1; i <= jobCount; i++) {
+        container.innerHTML += `
+          <div class="p-4 bg-gray-100 rounded shadow">
+            <h2 class="text-lg font-semibold mb-2">Job ${i}</h2>
+            <input type="file" id="screenshot${i}" accept="image/*" class="mb-2 block"/>
+            <button onclick="submitJob(${i})" class="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700">Submit</button>
+            <p id="status${i}" class="text-sm text-gray-600 mt-1"></p>
+          </div>
         `;
-
-        container.appendChild(div);
-      });
+      }
     }
 
     window.submitJob = async function(jobId) {
-      const fileInput = document.getElementById(`${jobId}_file`);
-      const statusText = document.getElementById(`${jobId}_status`);
+      const fileInput = document.getElementById(`screenshot${jobId}`);
+      const statusText = document.getElementById(`status${jobId}`);
+      const file = fileInput.files[0];
 
-      if (!fileInput.files.length) {
+      if (!file) {
         statusText.innerText = "Please upload a screenshot.";
         return;
       }
 
-      const file = fileInput.files[0];
-
       try {
-        const storageRef = ref(storage, `jobs/${currentUser.uid}/${jobId}.jpg`);
+        const storageRef = ref(storage, `jobScreenshots/${currentUser.uid}/job${jobId}_${Date.now()}.jpg`);
         await uploadBytes(storageRef, file);
-        const imageURL = await getDownloadURL(storageRef);
+        const downloadURL = await getDownloadURL(storageRef);
 
-        // Check if this job was already submitted
-        const jobRef = doc(db, "users", currentUser.uid, "jobs", jobId);
-        const jobSnap = await getDoc(jobRef);
-        if (jobSnap.exists()) {
-          statusText.innerText = "You already submitted this job.";
-          return;
-        }
-
-        // Save submission
-        await setDoc(jobRef, {
-          submittedAt: Timestamp.now(),
-          screenshotURL: imageURL
-        });
-
-        // Add balance
         const userDocRef = doc(db, "users", currentUser.uid);
         const userDoc = await getDoc(userDocRef);
         const currentBalance = userDoc.data().balance || 0;
+
+        // Add job record
+        await addDoc(collection(db, "jobs"), {
+          uid: currentUser.uid,
+          jobId: jobId,
+          imageUrl: downloadURL,
+          timestamp: Timestamp.now()
+        });
+
+        // Update balance
         await updateDoc(userDocRef, {
           balance: currentBalance + 5
         });
 
-        statusText.innerText = "Job submitted! ৳5 added to your balance.";
-        fileInput.value = "";
+        console.log(`Job ${jobId} submitted. +5৳ added. New Balance: ৳${currentBalance + 5}`);
+        statusText.innerText = `✅ Job ${jobId} submitted! ৳5 added to your balance.`;
+        fileInput.value = ""; // clear input
       } catch (err) {
-        console.error(err);
-        statusText.innerText = "Error submitting job: " + err.message;
+        console.error("Error during job submit:", err);
+        statusText.innerText = "❌ Error: " + err.message;
       }
     };
 
