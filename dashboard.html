@@ -1,92 +1,57 @@
 <!DOCTYPE html>
-<html lang="en" >
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>User Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard</title>
 
-  <!-- Tailwind CSS CDN -->
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js" type="module"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js" type="module"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js" type="module"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
 
-  <header class="bg-indigo-600 text-white p-4 flex justify-between items-center">
-    <h1 class="text-xl font-bold">User Dashboard</h1>
-    <button id="logoutBtn" class="bg-red-600 px-4 py-2 rounded hover:bg-red-700 flex items-center">
-      <i class="fas fa-sign-out-alt mr-2"></i> Logout
+  <div class="bg-white shadow-lg rounded-lg p-8 max-w-md w-full text-center space-y-4">
+    <h2 class="text-2xl font-bold mb-4">Welcome to Dashboard</h2>
+    
+    <p class="text-gray-700"><strong>Email:</strong> <span id="userEmail">Loading...</span></p>
+    <p class="text-gray-700"><strong>Balance:</strong> <span id="userBalance">৳0</span></p>
+    <p class="text-gray-700 flex justify-center items-center gap-2">
+      <strong>Your Refer Code:</strong> 
+      <span id="userReferCode">...</span>
+      <button onclick="copyReferCode()" class="text-blue-500 text-sm hover:underline">Copy</button>
+    </p>
+    <p class="text-gray-700"><strong>Total Refers:</strong> <span id="totalRefers">0</span></p>
+
+    <!-- Withdraw Section -->
+    <div class="mt-4">
+      <input 
+        id="withdrawAmount" 
+        type="number" 
+        min="1" 
+        placeholder="Enter amount to withdraw" 
+        class="border border-gray-300 rounded px-4 py-2 w-full mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+      <button 
+        onclick="withdraw()" 
+        class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
+      >
+        Withdraw
+      </button>
+    </div>
+
+    <button onclick="logout()" class="mt-6 w-full bg-red-600 text-white py-2 rounded hover:bg-red-700">
+      <i class="fas fa-sign-out-alt mr-1"></i> Logout
     </button>
-  </header>
-
-  <main class="flex-grow max-w-4xl mx-auto p-6 space-y-8">
-
-    <section class="bg-white p-6 rounded shadow">
-      <h2 class="text-2xl font-semibold mb-4">Welcome, <span id="userEmail">Loading...</span></h2>
-      <p class="text-lg">Your current balance: <span id="userBalance" class="font-bold">৳0</span></p>
-    </section>
-
-    <section class="bg-white p-6 rounded shadow max-w-md mx-auto">
-      <h2 class="text-xl font-semibold mb-4">Request Withdraw</h2>
-      <form id="withdrawForm" class="space-y-4">
-        <div>
-          <label for="withdrawAmount" class="block font-medium mb-1">Amount (৳)</label>
-          <input
-            type="number"
-            id="withdrawAmount"
-            name="withdrawAmount"
-            min="1"
-            step="0.01"
-            required
-            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
-        <button
-          type="submit"
-          class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 w-full"
-        >
-          Submit Request
-        </button>
-      </form>
-    </section>
-
-    <section class="bg-white p-6 rounded shadow">
-      <h2 class="text-xl font-semibold mb-4">Your Withdraw History</h2>
-      <div class="overflow-x-auto max-h-96 border rounded">
-        <table class="w-full min-w-[400px] border-collapse border border-gray-300">
-          <thead class="bg-gray-200 sticky top-0 z-10">
-            <tr>
-              <th class="p-3 border border-gray-300 text-left">Amount (৳)</th>
-              <th class="p-3 border border-gray-300 text-left">Date & Time</th>
-              <th class="p-3 border border-gray-300 text-center">Status</th>
-            </tr>
-          </thead>
-          <tbody id="withdrawHistoryBody">
-            <tr><td colspan="3" class="p-4 text-center text-gray-500">Loading...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-  </main>
+  </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import {
-      getAuth,
-      onAuthStateChanged,
-      signOut,
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import {
-      getFirestore,
-      collection,
-      addDoc,
-      getDocs,
-      query,
-      where,
-      orderBy,
-      Timestamp,
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
+    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
       authDomain: "bdwork-346d3.firebaseapp.com",
@@ -97,148 +62,99 @@
       measurementId: "G-FM1YJ8E5GK"
     };
 
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { 
+      getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, Timestamp 
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const userEmailEl = document.getElementById("userEmail");
-    const userBalanceEl = document.getElementById("userBalance");
-    const withdrawHistoryBody = document.getElementById("withdrawHistoryBody");
-    const withdrawForm = document.getElementById("withdrawForm");
-    const logoutBtn = document.getElementById("logoutBtn");
-
-    let currentUser = null;
-    let currentUserData = null;
-
-    logoutBtn.addEventListener("click", async () => {
-      await signOut(auth);
-      window.location.href = "login.html";
-    });
-
-    // Load user's withdraw history
-    async function loadWithdrawHistory(uid) {
-      withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-500">Loading...</td></tr>`;
-      try {
-        const withdrawsCol = collection(db, "withdraws");
-        const q = query(
-          withdrawsCol,
-          where("uid", "==", uid),
-          orderBy("timestamp", "desc"),
-          limit(50)
-        );
-        const snapshot = await getDocs(q);
-
-        if (snapshot.empty) {
-          withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center">No withdraw history found.</td></tr>`;
-          return;
-        }
-
-        let rowsHtml = "";
-        snapshot.forEach(docSnap => {
-          const wd = docSnap.data();
-          const dateStr = wd.timestamp?.toDate ? wd.timestamp.toDate().toLocaleString() : "N/A";
-          const status = wd.status || "pending";
-
-          let statusColor = "text-yellow-600";
-          if (status === "approved") statusColor = "text-green-600";
-          else if (status === "rejected") statusColor = "text-red-600";
-
-          rowsHtml += `
-            <tr class="border-t border-gray-200 hover:bg-gray-50">
-              <td class="p-3 border border-gray-300">৳${wd.amount || 0}</td>
-              <td class="p-3 border border-gray-300">${dateStr}</td>
-              <td class="p-3 border border-gray-300 text-center font-semibold ${statusColor}">
-                ${status.charAt(0).toUpperCase() + status.slice(1)}
-              </td>
-            </tr>
-          `;
-        });
-
-        withdrawHistoryBody.innerHTML = rowsHtml;
-
-      } catch (err) {
-        withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-red-600">Error loading withdraw history: ${err.message}</td></tr>`;
-        console.error(err);
-      }
-    }
-
-    // Load current user info (email, balance)
-    async function loadUserData(user) {
-      try {
-        const userDocRef = collection(db, "users");
-        const q = query(userDocRef, where("email", "==", user.email));
-        const querySnapshot = await getDocs(q);
-        if (querySnapshot.empty) {
-          alert("User data not found. Please contact support.");
-          await signOut(auth);
-          window.location.href = "login.html";
-          return;
-        }
-        const docSnap = querySnapshot.docs[0];
-        currentUserData = docSnap.data();
-        currentUserData.id = docSnap.id;
-
-        userEmailEl.textContent = currentUserData.email || user.email;
-        userBalanceEl.textContent = `৳${(currentUserData.balance || 0).toFixed(2)}`;
-
-        await loadWithdrawHistory(docSnap.id);
-
-      } catch (err) {
-        alert("Failed to load user data: " + err.message);
-        console.error(err);
-      }
-    }
-
-    // Handle withdraw form submission
-    withdrawForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      if (!currentUserData) {
-        alert("User data not loaded yet.");
-        return;
-      }
-
-      const amountInput = withdrawForm.withdrawAmount;
-      const amount = parseFloat(amountInput.value);
-
-      if (isNaN(amount) || amount <= 0) {
-        alert("Please enter a valid amount greater than zero.");
-        return;
-      }
-
-      if (amount > (currentUserData.balance || 0)) {
-        alert("You don't have enough balance for this withdraw request.");
-        return;
-      }
-
-      try {
-        await addDoc(collection(db, "withdraws"), {
-          uid: currentUserData.id,
-          userEmail: currentUserData.email,
-          amount,
-          timestamp: Timestamp.now(),
-          status: "pending"
-        });
-
-        alert("Withdraw request submitted successfully.");
-        amountInput.value = "";
-        // Reload withdraw history to show new request
-        await loadWithdrawHistory(currentUserData.id);
-
-      } catch (err) {
-        alert("Failed to submit withdraw request: " + err.message);
-        console.error(err);
-      }
-    });
+    let currentUserData = null; // to keep user data for updates
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
         window.location.href = "login.html";
         return;
       }
-      currentUser = user;
-      await loadUserData(user);
-    });
-  </script>
 
+      try {
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          currentUserData = { uid: user.uid, ...data };
+
+          document.getElementById("userEmail").innerText = data.email;
+          document.getElementById("userBalance").innerText = `৳${data.balance || 0}`;
+          document.getElementById("userReferCode").innerText = user.uid;
+
+          const referQuery = query(collection(db, "users"), where("referredBy", "==", user.uid));
+          const referSnapshot = await getDocs(referQuery);
+          document.getElementById("totalRefers").innerText = referSnapshot.size;
+        }
+      } catch (err) {
+        alert("Failed to load user data: " + err.message);
+      }
+    });
+
+    window.withdraw = async function () {
+      const amountInput = document.getElementById("withdrawAmount");
+      const amount = parseFloat(amountInput.value);
+
+      if (isNaN(amount) || amount <= 0) {
+        alert("Please enter a valid amount greater than 0.");
+        return;
+      }
+
+      if (!currentUserData) {
+        alert("User data not loaded yet.");
+        return;
+      }
+
+      const currentBalance = currentUserData.balance || 0;
+      if (amount > currentBalance) {
+        alert("You don't have enough balance to withdraw that amount.");
+        return;
+      }
+
+      try {
+        // Create new withdraw request doc in 'withdraws' collection with status pending
+        await addDoc(collection(db, "withdraws"), {
+          uid: currentUserData.uid,
+          userEmail: currentUserData.email,
+          amount: amount,
+          timestamp: Timestamp.now(),
+          status: "pending"
+        });
+
+        // Update user balance after withdraw request
+        const userDocRef = doc(db, "users", currentUserData.uid);
+        const newBalance = currentBalance - amount;
+        await updateDoc(userDocRef, { balance: newBalance });
+        currentUserData.balance = newBalance;
+
+        document.getElementById("userBalance").innerText = `৳${newBalance}`;
+        amountInput.value = "";
+        alert(`Withdraw request of ৳${amount} submitted successfully! Your new balance is ৳${newBalance}.`);
+      } catch (err) {
+        alert("Failed to process withdrawal: " + err.message);
+      }
+    };
+
+    window.logout = async function () {
+      await signOut(auth);
+      window.location.href = "login.html";
+    };
+
+    window.copyReferCode = function () {
+      const code = document.getElementById("userReferCode").innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        alert("Refer code copied!");
+      });
+    };
+  </script>
 </body>
 </html>
