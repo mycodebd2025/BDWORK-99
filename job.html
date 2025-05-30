@@ -1,111 +1,108 @@
+<!-- tasks.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Jobs</title>
+  <title>Complete Tasks</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen p-6">
-  <div class="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow space-y-6">
-    <h2 class="text-2xl font-bold text-center">🎯 Complete Jobs and Earn ৫৳</h2>
+<body class="bg-gray-100 text-gray-800">
 
-    <div id="jobsContainer" class="space-y-4"></div>
+  <main class="max-w-2xl mx-auto p-6">
+    <h1 class="text-2xl font-bold mb-6 text-center">🎯 Complete Tasks & Earn ৳5</h1>
 
-    <button onclick="logout()" class="w-full mt-6 bg-red-600 text-white py-2 rounded hover:bg-red-700">Logout</button>
-  </div>
+    <div id="tasksContainer" class="space-y-4"></div>
 
-  <!-- Firebase SDKs -->
+    <div class="text-center mt-6">
+      <a href="dashboard.html" class="text-blue-600 hover:underline">← Back to Dashboard</a>
+    </div>
+  </main>
+
   <script type="module">
+    // Firebase config (same as in dashboard)
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
       authDomain: "bdwork-346d3.firebaseapp.com",
       projectId: "bdwork-346d3",
       storageBucket: "bdwork-346d3.appspot.com",
       messagingSenderId: "900963179093",
-      appId: "1:900963179093:web:81e42d67bb31d603cc92dc"
+      appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
+      measurementId: "G-FM1YJ8E5GK"
     };
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import {
-      getFirestore, doc, getDoc, updateDoc, setDoc
+      getFirestore, doc, getDoc, updateDoc
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import {
-      getStorage, ref, uploadBytes, getDownloadURL
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const storage = getStorage(app);
 
-    const jobList = ["job1", "job2", "job3", "job4"];
-    let currentUser = null;
-    let userData = null;
+    const tasks = [
+      { id: "task1", name: "Upload Screenshot for Task 1" },
+      { id: "task2", name: "Complete Task 2" },
+      { id: "task3", name: "Complete Task 3" },
+      { id: "task4", name: "Complete Task 4" }
+    ];
 
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) return window.location.href = "login.html";
-      currentUser = user;
-      const docSnap = await getDoc(doc(db, "users", user.uid));
-      userData = docSnap.data();
-      renderJobs();
-    });
+    let currentUserData = null;
 
-    function renderJobs() {
-      const container = document.getElementById("jobsContainer");
+    function renderTasks(tasksCompleted = {}) {
+      const container = document.getElementById("tasksContainer");
       container.innerHTML = "";
-      jobList.forEach((jobId, index) => {
-        const jobDiv = document.createElement("div");
-        jobDiv.className = "border p-4 rounded-lg bg-gray-50";
-        jobDiv.innerHTML = `
-          <h3 class="font-semibold mb-2">Job ${index + 1}</h3>
-          <input type="file" id="file-${jobId}" accept="image/*" class="mb-2">
-          <button onclick="submitJob('${jobId}')" class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700">Submit</button>
-        `;
-        container.appendChild(jobDiv);
+      tasks.forEach(task => {
+        const done = tasksCompleted[task.id] === true;
+        const btn = document.createElement("button");
+        btn.className = done
+          ? "w-full bg-gray-400 text-white py-3 rounded-lg cursor-not-allowed font-semibold"
+          : "w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 font-semibold";
+        btn.innerText = done ? `${task.name} ✓ Completed` : `Complete ${task.name} (+৳5)`;
+        btn.disabled = done;
+        btn.onclick = () => completeTask(task.id);
+        container.appendChild(btn);
       });
     }
 
-    async function submitJob(jobId) {
-      const fileInput = document.getElementById(`file-${jobId}`);
-      const file = fileInput.files[0];
-      if (!file) return alert("Please upload a screenshot.");
-
-      const jobRef = doc(db, "users", currentUser.uid, "submittedJobs", jobId);
-      const jobSnap = await getDoc(jobRef);
-
-      if (jobSnap.exists()) {
-        alert("You already submitted this job.");
-        return;
-      }
+    async function completeTask(taskId) {
+      if (!currentUserData) return alert("User data not loaded.");
+      if (currentUserData.tasksCompleted?.[taskId]) return alert("Task already completed.");
 
       try {
-        const storageRef = ref(storage, `jobs/${currentUser.uid}/${jobId}`);
-        await uploadBytes(storageRef, file);
-        const downloadURL = await getDownloadURL(storageRef);
-
-        await setDoc(jobRef, {
-          submittedAt: new Date(),
-          screenshot: downloadURL
+        const userDocRef = doc(db, "users", currentUserData.uid);
+        await updateDoc(userDocRef, {
+          [`tasksCompleted.${taskId}`]: true,
+          balance: (currentUserData.balance || 0) + 5
         });
 
-        const userRef = doc(db, "users", currentUser.uid);
-        const newBalance = (userData.balance || 0) + 5;
-        await updateDoc(userRef, { balance: newBalance });
-        userData.balance = newBalance;
+        currentUserData.tasksCompleted = currentUserData.tasksCompleted || {};
+        currentUserData.tasksCompleted[taskId] = true;
+        currentUserData.balance = (currentUserData.balance || 0) + 5;
 
-        alert(`Job ${jobId} submitted! ৫৳ added to your balance.`);
-        fileInput.value = "";
+        renderTasks(currentUserData.tasksCompleted);
+        alert("Task completed! ৳5 added.");
       } catch (err) {
-        alert("Error submitting job: " + err.message);
+        alert("Error: " + err.message);
       }
     }
 
-    window.logout = async () => {
-      await signOut(auth);
-      location.href = "login.html";
-    };
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return window.location.href = "login.html";
+
+      try {
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          currentUserData = { uid: user.uid, ...data };
+          renderTasks(data.tasksCompleted || {});
+        }
+      } catch (err) {
+        alert("Failed to load user data: " + err.message);
+      }
+    });
   </script>
 </body>
 </html>
