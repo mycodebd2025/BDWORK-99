@@ -4,24 +4,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Admin Login</title>
+
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 </head>
-<body class="flex items-center justify-center h-screen bg-gray-100">
-  <div class="w-full max-w-sm bg-white p-6 rounded shadow-md">
+<body class="flex items-center justify-center min-h-screen bg-gray-100">
+
+  <div class="bg-white p-6 rounded shadow-md w-full max-w-sm">
     <h2 class="text-2xl font-bold text-center mb-4">Admin Login</h2>
-
-    <input type="email" id="adminEmail" placeholder="Email" class="w-full mb-3 px-4 py-2 border rounded" />
-    <input type="password" id="adminPassword" placeholder="Password" class="w-full mb-3 px-4 py-2 border rounded" />
-    <button onclick="adminLogin()" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Login</button>
-
-    <p class="text-center text-sm mt-3">
-      Not an admin? <a href="login.html" class="text-blue-500 hover:underline">User Login</a>
-    </p>
+    <input id="adminEmail" type="email" placeholder="Email" class="w-full mb-3 px-4 py-2 border rounded" />
+    <input id="adminPassword" type="password" placeholder="Password" class="w-full mb-3 px-4 py-2 border rounded" />
+    <button onclick="adminLogin()" class="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700">Login</button>
+    <p id="errorMsg" class="text-center mt-3 text-red-600"></p>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
@@ -35,32 +36,42 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    window.adminLogin = async () => {
-      const email = document.getElementById("adminEmail").value.trim();
+    window.adminLogin = async function () {
+      const email = document.getElementById("adminEmail").value;
       const password = document.getElementById("adminPassword").value;
-
-      if (!email || !password) {
-        alert("Please enter both email and password.");
-        return;
-      }
+      const errorMsg = document.getElementById("errorMsg");
+      errorMsg.textContent = "";
 
       try {
+        // Login user
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
+        const uid = userCredential.user.uid;
 
-        // Token থেকে কাস্টম ক্লেইমস পড়া
-        const idTokenResult = await user.getIdTokenResult();
+        // Get user document from Firestore
+        const userDocRef = doc(db, "users", uid);
+        const userDocSnap = await getDoc(userDocRef);
 
-        if (idTokenResult.claims.role === "admin") {
-          alert("Welcome Admin!");
-          window.location.href = "admin-panel.html";
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+
+          // Check role
+          if (userData.role === "admin") {
+            // Redirect to admin dashboard
+            window.location.href = "admin-dashboard.html";
+          } else {
+            // Not admin - logout and show error
+            errorMsg.textContent = "Access denied: You are not an admin.";
+            await auth.signOut();
+          }
         } else {
-          alert("Access denied: You are not an admin.");
+          errorMsg.textContent = "User data not found.";
           await auth.signOut();
         }
+
       } catch (error) {
-        alert("Login failed: " + error.message);
+        errorMsg.textContent = "Login failed: " + error.message;
       }
     };
   </script>
