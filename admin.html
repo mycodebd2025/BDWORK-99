@@ -84,299 +84,293 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import {
-      getAuth,
-      onAuthStateChanged,
-      signOut,
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import {
-      getFirestore,
-      collection,
-      getDocs,
-      doc,
-      getDoc,
-      updateDoc,
-      query,
-      orderBy,
-      limit,
-      where,
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getAuth,
+  onAuthStateChanged,
+  signOut,
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  doc,
+  getDoc,
+  updateDoc,
+  query,
+  orderBy,
+  limit,
+  where,
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
-      authDomain: "bdwork-346d3.firebaseapp.com",
-      projectId: "bdwork-346d3",
-      storageBucket: "bdwork-346d3.appspot.com",
-      messagingSenderId: "900963179093",
-      appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
-      measurementId: "G-FM1YJ8E5GK"
-    };
+const firebaseConfig = {
+  apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
+  authDomain: "bdwork-346d3.firebaseapp.com",
+  projectId: "bdwork-346d3",
+  storageBucket: "bdwork-346d3.appspot.com",
+  messagingSenderId: "900963179093",
+  appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
+  measurementId: "G-FM1YJ8E5GK"
+};
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-    const usersTableBody = document.getElementById("usersTableBody");
-    const withdrawRequestsBody = document.getElementById("withdrawRequestsBody");
-    const withdrawHistoryBody = document.getElementById("withdrawHistoryBody");
-    const logoutBtn = document.getElementById("logoutBtn");
+const usersTableBody = document.getElementById("usersTableBody");
+const withdrawRequestsBody = document.getElementById("withdrawRequestsBody");
+const withdrawHistoryBody = document.getElementById("withdrawHistoryBody");
+const logoutBtn = document.getElementById("logoutBtn");
 
-    logoutBtn.addEventListener("click", async () => {
-      await signOut(auth);
-      window.location.href = "login.html";
+logoutBtn.addEventListener("click", async () => {
+  await signOut(auth);
+  window.location.href = "login.html";
+});
+
+async function loadUsers() {
+  usersTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">Loading users...</td></tr>`;
+  try {
+    const usersCol = collection(db, "users");
+    const usersSnapshot = await getDocs(usersCol);
+
+    if (usersSnapshot.empty) {
+      usersTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">No users found.</td></tr>`;
+      return;
+    }
+
+    let rowsHtml = "";
+    usersSnapshot.forEach((docSnap) => {
+      const user = docSnap.data();
+      rowsHtml += `
+        <tr class="border-t border-gray-200 hover:bg-gray-50">
+          <td class="p-3 border border-gray-300 break-words max-w-xs">${user.email || "N/A"}</td>
+          <td class="p-3 border border-gray-300">
+            <input type="number" min="0" step="0.01" value="${user.balance || 0}" class="balance-input border rounded px-2 py-1 w-28" data-uid="${docSnap.id}" />
+          </td>
+          <td class="p-3 border border-gray-300">
+            <select class="role-select border rounded px-2 py-1" data-uid="${docSnap.id}">
+              <option value="user" ${user.role === "user" ? "selected" : ""}>User</option>
+              <option value="admin" ${user.role === "admin" ? "selected" : ""}>Admin</option>
+            </select>
+          </td>
+          <td class="p-3 border border-gray-300 text-center">
+            <button class="update-balance-btn bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded" data-uid="${docSnap.id}">
+              Update
+            </button>
+          </td>
+        </tr>
+      `;
     });
 
-    async function loadUsers() {
-      usersTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">Loading users...</td></tr>`;
-      try {
-        const usersCol = collection(db, "users");
-        const usersSnapshot = await getDocs(usersCol);
+    usersTableBody.innerHTML = rowsHtml;
 
-        if (usersSnapshot.empty) {
-          usersTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">No users found.</td></tr>`;
+    // Role update event
+    document.querySelectorAll(".role-select").forEach(select => {
+      select.addEventListener("change", async (e) => {
+        const uid = e.target.getAttribute("data-uid");
+        const newRole = e.target.value;
+        try {
+          await updateDoc(doc(db, "users", uid), { role: newRole });
+          alert(`User role updated to "${newRole}"`);
+        } catch (err) {
+          alert("Failed to update role: " + err.message);
+          console.error(err);
+        }
+      });
+    });
+
+    // Balance update event
+    document.querySelectorAll(".update-balance-btn").forEach(btn => {
+      btn.addEventListener("click", async (e) => {
+        const uid = e.target.getAttribute("data-uid");
+        const input = document.querySelector(`.balance-input[data-uid="${uid}"]`);
+        const newBalance = parseFloat(input.value);
+        if (isNaN(newBalance) || newBalance < 0) {
+          alert("Please enter a valid non-negative balance.");
           return;
         }
+        try {
+          await updateDoc(doc(db, "users", uid), { balance: newBalance });
+          alert("Balance updated successfully.");
+        } catch (err) {
+          alert("Failed to update balance: " + err.message);
+          console.error(err);
+        }
+      });
+    });
 
-        let rowsHtml = "";
-        usersSnapshot.forEach((docSnap) => {
-          const user = docSnap.data();
-          rowsHtml += `
-            <tr class="border-t border-gray-200 hover:bg-gray-50">
-              <td class="p-3 border border-gray-300 break-words max-w-xs">${user.email || "N/A"}</td>
-              <td class="p-3 border border-gray-300">
-                <input type="number" min="0" step="0.01" value="${user.balance || 0}" class="balance-input border rounded px-2 py-1 w-28" data-uid="${docSnap.id}" />
-              </td>
-              <td class="p-3 border border-gray-300">
-                <select class="role-select border rounded px-2 py-1" data-uid="${docSnap.id}">
-                  <option value="user" ${user.role === "user" ? "selected" : ""}>User</option>
-                  <option value="admin" ${user.role === "admin" ? "selected" : ""}>Admin</option>
-                </select>
-              </td>
-              <td class="p-3 border border-gray-300 text-center">
-                <button class="update-balance-btn bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded" data-uid="${docSnap.id}">
-                  Update
-                </button>
-              </td>
-            </tr>
-          `;
-        });
+  } catch (error) {
+    usersTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-600">Error loading users: ${error.message}</td></tr>`;
+    console.error("Error loading users:", error);
+  }
+}
 
-        usersTableBody.innerHTML = rowsHtml;
+async function loadWithdrawRequests() {
+  withdrawRequestsBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">Loading withdraw requests...</td></tr>`;
+  try {
+    const withdrawsCol = collection(db, "withdraws");
+    const q = query(withdrawsCol, orderBy("timestamp", "desc"), limit(50));
+    const withdrawsSnapshot = await getDocs(q);
 
-        // Update role event
-        document.querySelectorAll(".role-select").forEach(select => {
-          select.addEventListener("change", async (e) => {
-            const uid = e.target.getAttribute("data-uid");
-            const newRole = e.target.value;
-            try {
-              await updateDoc(doc(db, "users", uid), { role: newRole });
-              alert(`User role updated to "${newRole}"`);
-            } catch (err) {
-              alert("Failed to update role: " + err.message);
-              console.error(err);
-            }
-          });
-        });
-
-        // Update balance event
-        document.querySelectorAll(".update-balance-btn").forEach(btn => {
-          btn.addEventListener("click", async (e) => {
-            const uid = e.target.getAttribute("data-uid");
-            const input = document.querySelector(`.balance-input[data-uid="${uid}"]`);
-            const newBalance = parseFloat(input.value);
-            if (isNaN(newBalance) || newBalance < 0) {
-              alert("Please enter a valid non-negative balance.");
-              return;
-            }
-            try {
-              await updateDoc(doc(db, "users", uid), { balance: newBalance });
-              alert("Balance updated successfully.");
-            } catch (err) {
-              alert("Failed to update balance: " + err.message);
-              console.error(err);
-            }
-          });
-        });
-
-      } catch (error) {
-        usersTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-600">Error loading users: ${error.message}</td></tr>`;
-        console.error("Error loading users:", error);
-      }
+    if (withdrawsSnapshot.empty) {
+      withdrawRequestsBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center">No withdraw requests found.</td></tr>`;
+      return;
     }
 
-    async function loadWithdrawRequests() {
-      withdrawRequestsBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">Loading withdraw requests...</td></tr>`;
-      try {
-        const withdrawsCol = collection(db, "withdraws");
-        // Get pending and others, order by timestamp desc
-        const q = query(withdrawsCol, orderBy("timestamp", "desc"), limit(50));
-        const withdrawsSnapshot = await getDocs(q);
+    let rowsHtml = "";
+    withdrawsSnapshot.forEach(docSnap => {
+      const wd = docSnap.data();
+      const status = wd.status || "pending";
+      const dateStr = wd.timestamp?.toDate ? wd.timestamp.toDate().toLocaleString() : "N/A";
 
-        if (withdrawsSnapshot.empty) {
-          withdrawRequestsBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center">No withdraw requests found.</td></tr>`;
-          return;
-        }
+      rowsHtml += `
+        <tr class="border-t border-gray-200 hover:bg-gray-50">
+          <td class="p-3 border border-gray-300">${wd.userEmail || "N/A"}</td>
+          <td class="p-3 border border-gray-300">৳${wd.amount || 0}</td>
+          <td class="p-3 border border-gray-300">${dateStr}</td>
+          <td class="p-3 border border-gray-300 text-center font-semibold ${status === 'approved' ? 'text-green-600' : status === 'rejected' ? 'text-red-600' : 'text-yellow-600'}">${status.charAt(0).toUpperCase() + status.slice(1)}</td>
+          <td class="p-3 border border-gray-300 text-center space-x-2">
+            ${status === 'pending' ? `
+              <button data-id="${docSnap.id}" data-action="approved" class="approve-btn bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded">Approve</button>
+              <button data-id="${docSnap.id}" data-action="rejected" class="reject-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">Reject</button>
+            ` : '-'}
+          </td>
+        </tr>
+      `;
+    });
 
-        let rowsHtml = "";
-        withdrawsSnapshot.forEach(docSnap => {
-          const wd = docSnap.data();
-          const status = wd.status || "pending";
-          const dateStr = wd.timestamp?.toDate ? wd.timestamp.toDate().toLocaleString() : "N/A";
+    withdrawRequestsBody.innerHTML = rowsHtml;
 
-          rowsHtml += `
-            <tr class="border-t border-gray-200 hover:bg-gray-50">
-              <td class="p-3 border border-gray-300">${wd.userEmail || "N/A"}</td>
-              <td class="p-3 border border-gray-300">৳${wd.amount || 0}</td>
-              <td class="p-3 border border-gray-300">${dateStr}</td>
-              <td class="p-3 border border-gray-300 text-center font-semibold ${status === 'approved' ? 'text-green-600' : status === 'rejected' ? 'text-red-600' : 'text-yellow-600'}">${status.charAt(0).toUpperCase() + status.slice(1)}</td>
-              <td class="p-3 border border-gray-300 text-center space-x-2">
-                ${status === 'pending' ? `
-                  <button data-id="${docSnap.id}" data-action="approve" class="approve-btn bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded">Approve</button>
-                  <button data-id="${docSnap.id}" data-action="reject" class="reject-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">Reject</button>
-                ` : '-'}
-              </td>
-            </tr>
-          `;
-        });
+    // Attach approve/reject events
+    document.querySelectorAll(".approve-btn").forEach(btn => {
+      btn.addEventListener("click", () => handleWithdrawAction(btn.dataset.id, "approved"));
+    });
+    document.querySelectorAll(".reject-btn").forEach(btn => {
+      btn.addEventListener("click", () => handleWithdrawAction(btn.dataset.id, "rejected"));
+    });
 
-        withdrawRequestsBody.innerHTML = rowsHtml;
+  } catch (err) {
+    withdrawRequestsBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-600">Error loading withdraw requests: ${err.message}</td></tr>`;
+    console.error(err);
+  }
+}
 
-        // Attach approve/reject events
-        document.querySelectorAll(".approve-btn").forEach(btn => {
-          btn.addEventListener("click", () => handleWithdrawAction(btn.dataset.id, "approved"));
-        });
-        document.querySelectorAll(".reject-btn").forEach(btn => {
-          btn.addEventListener("click", () => handleWithdrawAction(btn.dataset.id, "rejected"));
-        });
+async function handleWithdrawAction(withdrawId, action) {
+  if (!confirm(`Are you sure you want to ${action} this withdraw request?`)) return;
+  try {
+    const wdDocRef = doc(db, "withdraws", withdrawId);
+    const wdDocSnap = await getDoc(wdDocRef);
+    if (!wdDocSnap.exists()) {
+      alert("Withdraw request not found.");
+      return;
+    }
+    const wdData = wdDocSnap.data();
 
-      } catch (err) {
-        withdrawRequestsBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-600">Error loading withdraw requests: ${err.message}</td></tr>`;
-        console.error(err);
-      }
+    if (wdData.status !== "pending") {
+      alert("This request is already processed.");
+      return;
     }
 
-    async function handleWithdrawAction(withdrawId, action) {
-      if (!confirm(`Are you sure you want to ${action} this withdraw request?`)) return;
-      try {
-        const wdDocRef = doc(db, "withdraws", withdrawId);
-        const wdDocSnap = await getDoc(wdDocRef);
-        if (!wdDocSnap.exists()) {
-          alert("Withdraw request not found.");
-          return;
-        }
-        const wdData = wdDocSnap.data();
+    if (action === "approved") {
+      // শুধু স্ট্যাটাস পরিবর্তন করুন, ব্যালেন্স টাচ করবেন না
+      await updateDoc(wdDocRef, { status: "approved" });
+      alert("Withdraw request approved.");
+    } else if (action === "rejected") {
+      // ব্যালেন্স ফেরত দিন এবং স্ট্যাটাস আপডেট করুন
+      const userDocRef = doc(db, "users", wdData.uid);
+      const userDocSnap = await getDoc(userDocRef);
 
-        if (wdData.status !== "pending") {
-          alert("This request is already processed.");
-          return;
-        }
+      if (!userDocSnap.exists()) {
+        alert("User not found.");
+        return;
+      }
 
-        // If reject, just update status
-        if (action === "rejected") {
-          await updateDoc(wdDocRef, { status: "rejected" });
-          alert("Withdraw request rejected.");
-          loadWithdrawRequests();
-          return;
-        }
+      const userData = userDocSnap.data();
+      const newBalance = (userData.balance || 0) + (wdData.amount || 0);
+      await updateDoc(userDocRef, { balance: newBalance });
+      await updateDoc(wdDocRef, { status: "rejected" });
+      alert("Withdraw request rejected and balance refunded.");
+    }
 
-        if (action === "approved") {
-  // Just update withdraw status, do NOT touch balance
-  await updateDoc(wdDocRef, { status: "approved" });
-  alert("Withdraw request approved.");
-} else if (action === "rejected") {
-  // Return balance to user
-  const userDocRef = doc(db, "users", wdData.uid);
-  const userDocSnap = await getDoc(userDocRef);
+    // রিলোড ডাটা
+    loadWithdrawRequests();
+    loadWithdrawHistory();
+    loadUsers();
 
-  if (!userDocSnap.exists()) {
-    alert("User not found.");
+  } catch (err) {
+    alert("Failed to process withdraw request: " + err.message);
+    console.error(err);
+  }
+}
+
+async function loadWithdrawHistory() {
+  withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-500">Loading withdraw history...</td></tr>`;
+  try {
+    const withdrawsCol = collection(db, "withdraws");
+    const q = query(withdrawsCol, where("status", "==", "approved"), orderBy("timestamp", "desc"), limit(50));
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center">No approved withdraws found.</td></tr>`;
+      return;
+    }
+
+    let rowsHtml = "";
+    snapshot.forEach(docSnap => {
+      const wd = docSnap.data();
+      const dateStr = wd.timestamp?.toDate ? wd.timestamp.toDate().toLocaleString() : "N/A";
+
+      rowsHtml += `
+        <tr class="border-t border-gray-200 hover:bg-gray-50">
+          <td class="p-3 border border-gray-300">${wd.userEmail || "N/A"}</td>
+          <td class="p-3 border border-gray-300">৳${wd.amount || 0}</td>
+          <td class="p-3 border border-gray-300">${dateStr}</td>
+        </tr>
+      `;
+    });
+
+    withdrawHistoryBody.innerHTML = rowsHtml;
+
+  } catch (err) {
+    withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-red-600">Error loading withdraw history: ${err.message}</td></tr>`;
+    console.error(err);
+  }
+}
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = "login.html";
     return;
   }
 
-  const userData = userDocSnap.data();
-  const newBalance = (userData.balance || 0) + (wdData.amount || 0);
-  await updateDoc(userDocRef, { balance: newBalance });
+  try {
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    if (!userDoc.exists()) {
+      alert("User data not found.");
+      await signOut(auth);
+      window.location.href = "login.html";
+      return;
+    }
+    const userData = userDoc.data();
 
-  // Update withdraw status
-  await updateDoc(wdDocRef, { status: "rejected" });
-  alert("Withdraw request rejected and balance refunded.");
-}
-
-        alert("Withdraw request approved and balance updated.");
-        loadWithdrawRequests();
-        loadWithdrawHistory();
-        loadUsers();
-
-      } catch (err) {
-        alert("Failed to process withdraw request: " + err.message);
-        console.error(err);
-      }
+    if (userData.role !== "admin") {
+      alert("Access denied. Admins only.");
+      await signOut(auth);
+      window.location.href = "login.html";
+      return;
     }
 
-    async function loadWithdrawHistory() {
-      withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-500">Loading withdraw history...</td></tr>`;
-      try {
-        const withdrawsCol = collection(db, "withdraws");
-        const q = query(withdrawsCol, where("status", "==", "approved"), orderBy("timestamp", "desc"), limit(50));
-        const snapshot = await getDocs(q);
+    // সব ডাটা লোড করুন
+    loadUsers();
+    loadWithdrawRequests();
+    loadWithdrawHistory();
 
-        if (snapshot.empty) {
-          withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center">No approved withdraws found.</td></tr>`;
-          return;
-        }
-
-        let rowsHtml = "";
-        snapshot.forEach(docSnap => {
-          const wd = docSnap.data();
-          const dateStr = wd.timestamp?.toDate ? wd.timestamp.toDate().toLocaleString() : "N/A";
-
-          rowsHtml += `
-            <tr class="border-t border-gray-200 hover:bg-gray-50">
-              <td class="p-3 border border-gray-300">${wd.userEmail || "N/A"}</td>
-              <td class="p-3 border border-gray-300">৳${wd.amount || 0}</td>
-              <td class="p-3 border border-gray-300">${dateStr}</td>
-            </tr>
-          `;
-        });
-
-        withdrawHistoryBody.innerHTML = rowsHtml;
-
-      } catch (err) {
-        withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-red-600">Error loading withdraw history: ${err.message}</td></tr>`;
-        console.error(err);
-      }
-    }
-
-    // Check Admin on auth state changed
-    onAuthStateChanged(auth, async user => {
-      if (!user) {
-        window.location.href = "login.html";
-        return;
-      }
-
-      // Check if user is admin
-      const userDocRef = doc(db, "users", user.uid);
-      const userDocSnap = await getDoc(userDocRef);
-      if (!userDocSnap.exists()) {
-        alert("User data not found.");
-        await signOut(auth);
-        window.location.href = "login.html";
-        return;
-      }
-      const userData = userDocSnap.data();
-
-      if (userData.role !== "admin") {
-        alert("Access denied: Admins only.");
-        await signOut(auth);
-        window.location.href = "login.html";
-        return;
-      }
-
-      // Load initial data
-      await loadUsers();
-      await loadWithdrawRequests();
-      await loadWithdrawHistory();
-    });
+  } catch (err) {
+    alert("Failed to verify user: " + err.message);
+    console.error(err);
+    await signOut(auth);
+    window.location.href = "login.html";
+  }
+});
   </script>
 </body>
 </html>
