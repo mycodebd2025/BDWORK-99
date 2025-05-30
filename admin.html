@@ -1,123 +1,123 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" >
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin Panel</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 min-h-screen p-8">
 
-  <h1 class="text-3xl font-bold mb-6 text-center">Admin Panel - Manage Users</h1>
+  <h1 class="text-3xl font-bold mb-6 text-center">Admin Panel - Manage Users</h1>
 
-  <div id="usersContainer" class="max-w-4xl mx-auto bg-white rounded shadow p-6">
-    <table class="min-w-full table-auto border-collapse border border-gray-300">
-      <thead>
-        <tr class="bg-gray-200">
-          <th class="border border-gray-300 px-4 py-2">Email</th>
-          <th class="border border-gray-300 px-4 py-2">Balance (৳)</th>
-          <th class="border border-gray-300 px-4 py-2">Refer Code</th>
-          <th class="border border-gray-300 px-4 py-2">Referred By</th>
-          <th class="border border-gray-300 px-4 py-2">Actions</th>
-        </tr>
-      </thead>
-      <tbody id="usersTableBody">
-        <!-- Users will be listed here -->
-      </tbody>
-    </table>
-  </div>
+  <div id="usersContainer" class="max-w-4xl mx-auto bg-white rounded shadow p-6">
+    <table class="min-w-full table-auto border-collapse border border-gray-300">
+      <thead>
+        <tr class="bg-gray-200">
+          <th class="border border-gray-300 px-4 py-2">Email</th>
+          <th class="border border-gray-300 px-4 py-2">Balance (৳)</th>
+          <th class="border border-gray-300 px-4 py-2">Refer Code</th>
+          <th class="border border-gray-300 px-4 py-2">Referred By</th>
+          <th class="border border-gray-300 px-4 py-2">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="usersTableBody">
+        <!-- Users will be listed here -->
+      </tbody>
+    </table>
+  </div>
 
-  <button onclick="logout()" class="mt-6 bg-red-600 text-white py-2 px-6 rounded hover:bg-red-700 block mx-auto">
-    Logout
-  </button>
+  <button onclick="logout()" class="mt-6 bg-red-600 text-white py-2 px-6 rounded hover:bg-red-700 block mx-auto">
+    Logout
+  </button>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
-      authDomain: "bdwork-346d3.firebaseapp.com",
-      projectId: "bdwork-346d3",
-      storageBucket: "bdwork-346d3.appspot.com",
-      messagingSenderId: "900963179093",
-      appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
-      measurementId: "G-FM1YJ8E5GK"
-    };
+    const firebaseConfig = {
+      apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
+      authDomain: "bdwork-346d3.firebaseapp.com",
+      projectId: "bdwork-346d3",
+      storageBucket: "bdwork-346d3.appspot.com",
+      messagingSenderId: "900963179093",
+      appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
+      measurementId: "G-FM1YJ8E5GK"
+    };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    // Check if logged in and is admin
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        window.location.href = "admin-login.html";
-        return;
-      }
-      const idTokenResult = await user.getIdTokenResult();
-      if (idTokenResult.claims.role !== "admin") {
-        alert("Access denied! You are not an admin.");
-        await signOut(auth);
-        window.location.href = "admin-login.html";
-        return;
-      }
-      loadUsers();
-    });
+    // Check if logged in and admin
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
+      const idTokenResult = await user.getIdTokenResult();
+      if (idTokenResult.claims.role !== "admin") {
+        alert("Access denied! You are not an admin.");
+        await signOut(auth);
+        window.location.href = "login.html";
+        return;
+      }
+      loadUsers();
+    });
 
-    // Load all users from Firestore
-    async function loadUsers() {
-      const usersSnapshot = await getDocs(collection(db, "users"));
-      const tbody = document.getElementById("usersTableBody");
-      tbody.innerHTML = "";
+    // Load all users
+    async function loadUsers() {
+      const usersSnapshot = await getDocs(collection(db, "users"));
+      const tbody = document.getElementById("usersTableBody");
+      tbody.innerHTML = "";
 
-      usersSnapshot.forEach(docSnap => {
-        const user = docSnap.data();
-        const tr = document.createElement("tr");
-        tr.className = "border border-gray-300";
+      usersSnapshot.forEach(docSnap => {
+        const user = docSnap.data();
+        const tr = document.createElement("tr");
+        tr.className = "border border-gray-300";
 
-        tr.innerHTML = `
-          <td class="border border-gray-300 px-4 py-2">${user.email || ""}</td>
-          <td class="border border-gray-300 px-4 py-2">
-            <input type="number" min="0" value="${user.balance || 0}" data-uid="${docSnap.id}" class="balanceInput w-20 p-1 border rounded" />
-          </td>
-          <td class="border border-gray-300 px-4 py-2">${user.referCode || user.uid || ""}</td>
-          <td class="border border-gray-300 px-4 py-2">${user.referredBy || "-"}</td>
-          <td class="border border-gray-300 px-4 py-2 text-center">
-            <button class="updateBtn bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600" data-uid="${docSnap.id}">
-              Update
-            </button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
+        tr.innerHTML = `
+          <td class="border border-gray-300 px-4 py-2">${user.email || ""}</td>
+          <td class="border border-gray-300 px-4 py-2">
+            <input type="number" min="0" value="${user.balance || 0}" data-uid="${docSnap.id}" class="balanceInput w-20 p-1 border rounded" />
+          </td>
+          <td class="border border-gray-300 px-4 py-2">${user.referCode || docSnap.id}</td>
+          <td class="border border-gray-300 px-4 py-2">${user.referredBy || "-"}</td>
+          <td class="border border-gray-300 px-4 py-2 text-center">
+            <button class="updateBtn bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600" data-uid="${docSnap.id}">
+              Update
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
 
-      // Add event listeners for update buttons
-      document.querySelectorAll(".updateBtn").forEach(btn => {
-        btn.addEventListener("click", async (e) => {
-          const uid = e.target.dataset.uid;
-          const input = document.querySelector(`input.balanceInput[data-uid="${uid}"]`);
-          const newBalance = parseFloat(input.value);
-          if (isNaN(newBalance) || newBalance < 0) {
-            alert("Please enter a valid balance.");
-            return;
-          }
-          try {
-            await updateDoc(doc(db, "users", uid), { balance: newBalance });
-            alert("Balance updated successfully.");
-          } catch (error) {
-            alert("Failed to update balance: " + error.message);
-          }
-        });
-      });
-    }
+      // Add update button listeners
+      document.querySelectorAll(".updateBtn").forEach(btn => {
+        btn.addEventListener("click", async (e) => {
+          const uid = e.target.dataset.uid;
+          const input = document.querySelector(`input.balanceInput[data-uid="${uid}"]`);
+          const newBalance = parseFloat(input.value);
+          if (isNaN(newBalance) || newBalance < 0) {
+            alert("Please enter a valid balance.");
+            return;
+          }
+          try {
+            await updateDoc(doc(db, "users", uid), { balance: newBalance });
+            alert("Balance updated successfully.");
+          } catch (error) {
+            alert("Failed to update balance: " + error.message);
+          }
+        });
+      });
+    }
 
-    // Logout function
-    window.logout = async () => {
-      await signOut(auth);
-      window.location.href = "admin-login.html";
-    };
-  </script>
+    // Logout
+    window.logout = async () => {
+      await signOut(auth);
+      window.location.href = "login.html";
+    };
+  </script>
 </body>
 </html>
