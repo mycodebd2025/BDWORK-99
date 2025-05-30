@@ -279,27 +279,28 @@
           return;
         }
 
-        // If approve, deduct balance from user and update withdraw status
-        const userDocRef = doc(db, "users", wdData.uid);
-        const userDocSnap = await getDoc(userDocRef);
+        if (action === "approved") {
+  // Just update withdraw status, do NOT touch balance
+  await updateDoc(wdDocRef, { status: "approved" });
+  alert("Withdraw request approved.");
+} else if (action === "rejected") {
+  // Return balance to user
+  const userDocRef = doc(db, "users", wdData.uid);
+  const userDocSnap = await getDoc(userDocRef);
 
-        if (!userDocSnap.exists()) {
-          alert("User not found.");
-          return;
-        }
+  if (!userDocSnap.exists()) {
+    alert("User not found.");
+    return;
+  }
 
-        const userData = userDocSnap.data();
-        if ((userData.balance || 0) < (wdData.amount || 0)) {
-          alert("User does not have enough balance to approve this withdraw.");
-          return;
-        }
+  const userData = userDocSnap.data();
+  const newBalance = (userData.balance || 0) + (wdData.amount || 0);
+  await updateDoc(userDocRef, { balance: newBalance });
 
-        // Deduct balance
-        const newBalance = (userData.balance || 0) - (wdData.amount || 0);
-        await updateDoc(userDocRef, { balance: newBalance });
-
-        // Update withdraw status
-        await updateDoc(wdDocRef, { status: "approved" });
+  // Update withdraw status
+  await updateDoc(wdDocRef, { status: "rejected" });
+  alert("Withdraw request rejected and balance refunded.");
+}
 
         alert("Withdraw request approved and balance updated.");
         loadWithdrawRequests();
