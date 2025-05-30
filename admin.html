@@ -1,376 +1,287 @@
 <!DOCTYPE html>
-<html lang="en" >
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin Panel</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Dashboard</title>
 
-  <!-- TailwindCSS & FontAwesome -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
+<body class="bg-gradient-to-tr from-blue-50 to-purple-100 min-h-screen flex items-center justify-center px-4">
 
-  <header class="bg-blue-600 text-white p-4 flex justify-between items-center">
-    <h1 class="text-xl font-bold">Admin Panel</h1>
-    <button id="logoutBtn" class="bg-red-600 px-4 py-2 rounded hover:bg-red-700 flex items-center">
-      <i class="fas fa-sign-out-alt mr-2"></i> Logout
-    </button>
-  </header>
+  <main class="w-full max-w-lg bg-white shadow-2xl rounded-2xl p-6 md:p-8 space-y-6 overflow-hidden">
+    <h2 class="text-2xl md:text-3xl font-bold text-gray-800 text-center">👋 Welcome to Your Dashboard</h2>
 
-  <main class="flex-grow p-6 max-w-7xl mx-auto w-full space-y-10">
+    <!-- User Info -->
+    <div class="grid gap-4">
+      <div class="bg-gray-50 p-4 rounded-lg shadow-sm">
+        <p class="text-gray-600 text-sm">Email</p>
+        <p class="text-lg font-semibold text-gray-800" id="userEmail">Loading...</p>
+      </div>
 
-    <section>
-      <h2 class="text-2xl font-semibold mb-6">Users Management</h2>
+      <div class="bg-gray-50 p-4 rounded-lg shadow-sm flex gap-4 items-center">
+        <div>
+          <p class="text-gray-600 text-sm">Balance</p>
+          <p class="text-lg font-bold text-green-600" id="userBalance">৳0</p>
+        </div>
+        <div>
+          <p class="text-gray-600 text-sm">Total Refers</p>
+          <p class="text-lg font-semibold text-blue-600" id="totalRefers">0</p>
+        </div>
+      </div>
 
-      <div class="overflow-x-auto border rounded shadow bg-white">
-        <table class="w-full min-w-[700px] border-collapse border border-gray-300">
-          <thead class="bg-gray-200 sticky top-0 z-10">
-            <tr>
-              <th class="p-3 border border-gray-300 text-left">Email</th>
-              <th class="p-3 border border-gray-300 text-left">Balance (৳)</th>
-              <th class="p-3 border border-gray-300 text-left">Role</th>
-              <th class="p-3 border border-gray-300 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="usersTableBody">
-            <tr><td colspan="4" class="p-4 text-center text-gray-500">Loading users...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+      <div class="bg-gray-50 p-4 rounded-lg shadow-sm">
+        <p class="text-gray-600 text-sm">Your Refer Code</p>
+        <div class="flex items-center justify-between mt-1">
+          <span class="font-mono font-medium text-sm text-gray-800" id="userReferCode">...</span>
+          <button onclick="copyReferCode()" class="text-sm text-blue-600 hover:underline">Copy</button>
+        </div>
+      </div>
+    </div>
 
-    <section>
-      <h2 class="text-2xl font-semibold mb-6">Withdraw Requests</h2>
+    <!-- Task Section -->
+    <div class="pt-6 border-t border-gray-200 space-y-4">
+      <h3 class="text-lg font-semibold text-gray-800 mb-2">Complete Tasks & Earn ৳5 Each</h3>
 
-      <div class="overflow-x-auto border rounded shadow bg-white max-h-96">
-        <table class="w-full min-w-[700px] border-collapse border border-gray-300">
-          <thead class="bg-gray-200 sticky top-0 z-10">
-            <tr>
-              <th class="p-3 border border-gray-300 text-left">User Email</th>
-              <th class="p-3 border border-gray-300 text-left">Amount (৳)</th>
-              <th class="p-3 border border-gray-300 text-left">Date & Time</th>
-              <th class="p-3 border border-gray-300 text-center">Status</th>
-              <th class="p-3 border border-gray-300 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="withdrawRequestsBody">
-            <tr><td colspan="5" class="p-4 text-center text-gray-500">Loading withdraw requests...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+      <div id="tasksContainer" class="space-y-3">
+        <!-- Task buttons will be rendered here -->
+      </div>
+    </div>
 
-    <section>
-      <h2 class="text-2xl font-semibold mb-6">Withdraw History (Approved)</h2>
+    <!-- Withdraw Section -->
+    <div class="pt-4 border-t border-gray-200">
+      <h3 class="text-lg font-semibold text-gray-800 mb-2">Withdraw Balance</h3>
+      <input 
+        id="withdrawAmount" 
+        type="number" 
+        min="1" 
+        placeholder="Enter amount (৳)" 
+        class="w-full border border-gray-300 rounded-md px-4 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+      <button 
+        onclick="withdraw()" 
+        class="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition"
+      >
+        Withdraw
+      </button>
+    </div>
 
-      <div class="overflow-x-auto border rounded shadow bg-white max-h-80">
-        <table class="w-full min-w-[500px] border-collapse border border-gray-300">
-          <thead class="bg-gray-200 sticky top-0 z-10">
-            <tr>
-              <th class="p-3 border border-gray-300 text-left">User Email</th>
-              <th class="p-3 border border-gray-300 text-left">Amount (৳)</th>
-              <th class="p-3 border border-gray-300 text-left">Date & Time</th>
-            </tr>
-          </thead>
-          <tbody id="withdrawHistoryBody">
-            <tr><td colspan="3" class="p-4 text-center text-gray-500">Loading withdraw history...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+    <!-- Withdraw History -->
+    <div class="pt-6 border-t border-gray-200">
+      <h3 class="text-lg font-semibold text-gray-800 mb-2">Withdraw History</h3>
+      <div id="withdrawHistory" class="space-y-2 max-h-60 overflow-y-auto">
+        <p class="text-gray-500 text-sm">Loading history...</p>
+      </div>
+    </div>
 
-  </main>
+    <button onclick="logout()" class="w-full bg-red-600 text-white py-2 rounded-md hover:bg-red-700">
+      <i class="fas fa-sign-out-alt mr-1"></i> Logout
+    </button>
+  </main>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {
-  getAuth,
-  onAuthStateChanged,
-  signOut,
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  doc,
-  getDoc,
-  updateDoc,
-  query,
-  orderBy,
-  limit,
-  where,
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  <!-- Firebase SDKs -->
+  <script type="module">
+    const firebaseConfig = {
+      apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
+      authDomain: "bdwork-346d3.firebaseapp.com",
+      projectId: "bdwork-346d3",
+      storageBucket: "bdwork-346d3.appspot.com",
+      messagingSenderId: "900963179093",
+      appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
+      measurementId: "G-FM1YJ8E5GK"
+    };
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
-  authDomain: "bdwork-346d3.firebaseapp.com",
-  projectId: "bdwork-346d3",
-  storageBucket: "bdwork-346d3.appspot.com",
-  messagingSenderId: "900963179093",
-  appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
-  measurementId: "G-FM1YJ8E5GK"
-};
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { 
+      getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, Timestamp 
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-const usersTableBody = document.getElementById("usersTableBody");
-const withdrawRequestsBody = document.getElementById("withdrawRequestsBody");
-const withdrawHistoryBody = document.getElementById("withdrawHistoryBody");
-const logoutBtn = document.getElementById("logoutBtn");
+    let currentUserData = null;
 
-logoutBtn.addEventListener("click", async () => {
-  await signOut(auth);
-  window.location.href = "login.html";
-});
+    // Define the tasks
+    const tasks = [
+      { id: "task1", name: "Upload Screenshot for Task 1" },
+      { id: "task2", name: "Complete Task 2" },
+      { id: "task3", name: "Complete Task 3" },
+      { id: "task4", name: "Complete Task 4" }
+    ];
 
-async function loadUsers() {
-  usersTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">Loading users...</td></tr>`;
-  try {
-    const usersCol = collection(db, "users");
-    const usersSnapshot = await getDocs(usersCol);
+    // Render tasks buttons
+    function renderTasks(tasksCompleted = {}) {
+      const container = document.getElementById("tasksContainer");
+      container.innerHTML = "";
 
-    if (usersSnapshot.empty) {
-      usersTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">No users found.</td></tr>`;
-      return;
-    }
+      tasks.forEach(task => {
+        const done = tasksCompleted[task.id] === true;
+        const btn = document.createElement("button");
+        btn.className = done
+          ? "w-full bg-gray-400 text-white py-2 rounded-md cursor-not-allowed"
+          : "w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition";
+        btn.innerText = done ? `${task.name} ✓ Completed` : `Complete ${task.name} (+৳5)`;
+        btn.disabled = done;
+        btn.onclick = () => completeTask(task.id);
+        container.appendChild(btn);
+      });
+    }
 
-    let rowsHtml = "";
-    usersSnapshot.forEach((docSnap) => {
-      const user = docSnap.data();
-      rowsHtml += `
-        <tr class="border-t border-gray-200 hover:bg-gray-50">
-          <td class="p-3 border border-gray-300 break-words max-w-xs">${user.email || "N/A"}</td>
-          <td class="p-3 border border-gray-300">
-            <input type="number" min="0" step="0.01" value="${user.balance || 0}" class="balance-input border rounded px-2 py-1 w-28" data-uid="${docSnap.id}" />
-          </td>
-          <td class="p-3 border border-gray-300">
-            <select class="role-select border rounded px-2 py-1" data-uid="${docSnap.id}">
-              <option value="user" ${user.role === "user" ? "selected" : ""}>User</option>
-              <option value="admin" ${user.role === "admin" ? "selected" : ""}>Admin</option>
-            </select>
-          </td>
-          <td class="p-3 border border-gray-300 text-center">
-            <button class="update-balance-btn bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded" data-uid="${docSnap.id}">
-              Update
-            </button>
-          </td>
-        </tr>
-      `;
-    });
+    async function completeTask(taskId) {
+      if (!currentUserData) {
+        alert("User data not loaded yet.");
+        return;
+      }
 
-    usersTableBody.innerHTML = rowsHtml;
+      // Safety check if already done
+      if (currentUserData.tasksCompleted && currentUserData.tasksCompleted[taskId]) {
+        alert("You already completed this task.");
+        return;
+      }
 
-    // Role update event
-    document.querySelectorAll(".role-select").forEach(select => {
-      select.addEventListener("change", async (e) => {
-        const uid = e.target.getAttribute("data-uid");
-        const newRole = e.target.value;
-        try {
-          await updateDoc(doc(db, "users", uid), { role: newRole });
-          alert(`User role updated to "${newRole}"`);
-        } catch (err) {
-          alert("Failed to update role: " + err.message);
-          console.error(err);
-        }
-      });
-    });
+      try {
+        const userDocRef = doc(db, "users", currentUserData.uid);
 
-    // Balance update event
-    document.querySelectorAll(".update-balance-btn").forEach(btn => {
-      btn.addEventListener("click", async (e) => {
-        const uid = e.target.getAttribute("data-uid");
-        const input = document.querySelector(`.balance-input[data-uid="${uid}"]`);
-        const newBalance = parseFloat(input.value);
-        if (isNaN(newBalance) || newBalance < 0) {
-          alert("Please enter a valid non-negative balance.");
-          return;
-        }
-        try {
-          await updateDoc(doc(db, "users", uid), { balance: newBalance });
-          alert("Balance updated successfully.");
-        } catch (err) {
-          alert("Failed to update balance: " + err.message);
-          console.error(err);
-        }
-      });
-    });
+        // Update Firestore atomically: mark task done + add 5 to balance
+        await updateDoc(userDocRef, {
+          [`tasksCompleted.${taskId}`]: true,
+          balance: (currentUserData.balance || 0) + 5
+        });
 
-  } catch (error) {
-    usersTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-600">Error loading users: ${error.message}</td></tr>`;
-    console.error("Error loading users:", error);
-  }
-}
+        // Update local data & UI
+        currentUserData.tasksCompleted = currentUserData.tasksCompleted || {};
+        currentUserData.tasksCompleted[taskId] = true;
+        currentUserData.balance = (currentUserData.balance || 0) + 5;
 
-async function loadWithdrawRequests() {
-  withdrawRequestsBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">Loading withdraw requests...</td></tr>`;
-  try {
-    const withdrawsCol = collection(db, "withdraws");
-    const q = query(withdrawsCol, orderBy("timestamp", "desc"), limit(50));
-    const withdrawsSnapshot = await getDocs(q);
+        document.getElementById("userBalance").innerText = `৳${currentUserData.balance}`;
+        renderTasks(currentUserData.tasksCompleted);
 
-    if (withdrawsSnapshot.empty) {
-      withdrawRequestsBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center">No withdraw requests found.</td></tr>`;
-      return;
-    }
+        alert("Task completed! You earned ৳5.");
+      } catch (err) {
+        alert("Failed to complete task: " + err.message);
+      }
+    }
 
-    let rowsHtml = "";
-    withdrawsSnapshot.forEach(docSnap => {
-      const wd = docSnap.data();
-      const status = wd.status || "pending";
-      const dateStr = wd.timestamp?.toDate ? wd.timestamp.toDate().toLocaleString() : "N/A";
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
 
-      rowsHtml += `
-        <tr class="border-t border-gray-200 hover:bg-gray-50">
-          <td class="p-3 border border-gray-300">${wd.userEmail || "N/A"}</td>
-          <td class="p-3 border border-gray-300">৳${wd.amount || 0}</td>
-          <td class="p-3 border border-gray-300">${dateStr}</td>
-          <td class="p-3 border border-gray-300 text-center font-semibold ${status === 'approved' ? 'text-green-600' : status === 'rejected' ? 'text-red-600' : 'text-yellow-600'}">${status.charAt(0).toUpperCase() + status.slice(1)}</td>
-          <td class="p-3 border border-gray-300 text-center space-x-2">
-            ${status === 'pending' ? `
-              <button data-id="${docSnap.id}" data-action="approved" class="approve-btn bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded">Approve</button>
-              <button data-id="${docSnap.id}" data-action="rejected" class="reject-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">Reject</button>
-            ` : '-'}
-          </td>
-        </tr>
-      `;
-    });
+      try {
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          currentUserData = { uid: user.uid, ...data };
 
-    withdrawRequestsBody.innerHTML = rowsHtml;
+          document.getElementById("userEmail").innerText = data.email;
+          document.getElementById("userBalance").innerText = `৳${data.balance || 0}`;
+          document.getElementById("userReferCode").innerText = user.uid;
 
-    // Attach approve/reject events
-    document.querySelectorAll(".approve-btn").forEach(btn => {
-      btn.addEventListener("click", () => handleWithdrawAction(btn.dataset.id, "approved"));
-    });
-    document.querySelectorAll(".reject-btn").forEach(btn => {
-      btn.addEventListener("click", () => handleWithdrawAction(btn.dataset.id, "rejected"));
-    });
+          const referQuery = query(collection(db, "users"), where("referredBy", "==", user.uid));
+          const referSnapshot = await getDocs(referQuery);
+          document.getElementById("totalRefers").innerText = referSnapshot.size;
 
-  } catch (err) {
-    withdrawRequestsBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-600">Error loading withdraw requests: ${err.message}</td></tr>`;
-    console.error(err);
-  }
-}
+          // Load withdraw history
+          const withdrawQuery = query(
+            collection(db, "withdraws"),
+            where("uid", "==", user.uid)
+          );
+          const withdrawSnap = await getDocs(withdrawQuery);
+          const historyContainer = document.getElementById("withdrawHistory");
 
-async function handleWithdrawAction(withdrawId, action) {
-  if (!confirm(`Are you sure you want to ${action} this withdraw request?`)) return;
-  try {
-    const wdDocRef = doc(db, "withdraws", withdrawId);
-    const wdDocSnap = await getDoc(wdDocRef);
-    if (!wdDocSnap.exists()) {
-      alert("Withdraw request not found.");
-      return;
-    }
-    const wdData = wdDocSnap.data();
+          if (withdrawSnap.empty) {
+            historyContainer.innerHTML = '<p class="text-sm text-gray-500">No withdraw history found.</p>';
+          } else {
+            historyContainer.innerHTML = "";
+            withdrawSnap.forEach(doc => {
+              const data = doc.data();
+              const date = data.timestamp?.toDate().toLocaleString() || "Unknown time";
+              const item = document.createElement("div");
+              item.className = "bg-gray-100 p-3 rounded-md shadow-sm text-sm flex justify-between items-center";
+              item.innerHTML = `
+                <div>
+                  <p class="font-medium text-gray-700">৳${data.amount}</p>
+                  <p class="text-xs text-gray-500">${date}</p>
+                </div>
+                <span class="text-xs px-2 py-1 rounded-full ${
+                  data.status === "approved" ? "bg-green-100 text-green-700" :
+                  data.status === "rejected" ? "bg-red-100 text-red-700" :
+                  "bg-yellow-100 text-yellow-700"
+                }">${data.status}</span>
+              `;
+              historyContainer.appendChild(item);
+            });
+          }
 
-    if (wdData.status !== "pending") {
-      alert("This request is already processed.");
-      return;
-    }
+          // Render tasks buttons with current state
+          renderTasks(data.tasksCompleted || {});
+        }
+      } catch (err) {
+        alert("Failed to load user data: " + err.message);
+      }
+    });
 
-    if (action === "approved") {
-      // শুধু স্ট্যাটাস পরিবর্তন করুন, ব্যালেন্স টাচ করবেন না
-      await updateDoc(wdDocRef, { status: "approved" });
-      alert("Withdraw request approved.");
-    } else if (action === "rejected") {
-      // ব্যালেন্স ফেরত দিন এবং স্ট্যাটাস আপডেট করুন
-      const userDocRef = doc(db, "users", wdData.uid);
-      const userDocSnap = await getDoc(userDocRef);
+    window.withdraw = async function () {
+      const amountInput = document.getElementById("withdrawAmount");
+      const amount = parseFloat(amountInput.value);
 
-      if (!userDocSnap.exists()) {
-        alert("User not found.");
-        return;
-      }
+      if (isNaN(amount) || amount <= 0) {
+        alert("Please enter a valid amount greater than 0.");
+        return;
+      }
 
-      const userData = userDocSnap.data();
-      const newBalance = (userData.balance || 0) + (wdData.amount || 0);
-      await updateDoc(userDocRef, { balance: newBalance });
-      await updateDoc(wdDocRef, { status: "rejected" });
-      alert("Withdraw request rejected and balance refunded.");
-    }
+      if (!currentUserData) {
+        alert("User data not loaded yet.");
+        return;
+      }
 
-    // রিলোড ডাটা
-    loadWithdrawRequests();
-    loadWithdrawHistory();
-    loadUsers();
+      const currentBalance = currentUserData.balance || 0;
+      if (amount > currentBalance) {
+        alert("You don't have enough balance to withdraw that amount.");
+        return;
+      }
 
-  } catch (err) {
-    alert("Failed to process withdraw request: " + err.message);
-    console.error(err);
-  }
-}
+      try {
+        await addDoc(collection(db, "withdraws"), {
+          uid: currentUserData.uid,
+          userId: currentUserData.uid,
+          userEmail: currentUserData.email,
+          amount: amount,
+          timestamp: Timestamp.now(),
+          status: "pending"
+        });
 
-async function loadWithdrawHistory() {
-  withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-500">Loading withdraw history...</td></tr>`;
-  try {
-    const withdrawsCol = collection(db, "withdraws");
-    const q = query(withdrawsCol, where("status", "==", "approved"), orderBy("timestamp", "desc"), limit(50));
-    const snapshot = await getDocs(q);
+        const userDocRef = doc(db, "users", currentUserData.uid);
+        const newBalance = currentBalance - amount;
+        await updateDoc(userDocRef, { balance: newBalance });
+        currentUserData.balance = newBalance;
 
-    if (snapshot.empty) {
-      withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center">No approved withdraws found.</td></tr>`;
-      return;
-    }
+        document.getElementById("userBalance").innerText = `৳${newBalance}`;
+        amountInput.value = "";
+        alert(`Withdraw request of ৳${amount} submitted successfully!`);
+        window.location.reload(); // Reload to show updated history
+      } catch (err) {
+        alert("Failed to process withdrawal: " + err.message);
+      }
+    };
 
-    let rowsHtml = "";
-    snapshot.forEach(docSnap => {
-      const wd = docSnap.data();
-      const dateStr = wd.timestamp?.toDate ? wd.timestamp.toDate().toLocaleString() : "N/A";
+    window.logout = async function () {
+      await signOut(auth);
+      window.location.href = "login.html";
+    };
 
-      rowsHtml += `
-        <tr class="border-t border-gray-200 hover:bg-gray-50">
-          <td class="p-3 border border-gray-300">${wd.userEmail || "N/A"}</td>
-          <td class="p-3 border border-gray-300">৳${wd.amount || 0}</td>
-          <td class="p-3 border border-gray-300">${dateStr}</td>
-        </tr>
-      `;
-    });
-
-    withdrawHistoryBody.innerHTML = rowsHtml;
-
-  } catch (err) {
-    withdrawHistoryBody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-red-600">Error loading withdraw history: ${err.message}</td></tr>`;
-    console.error(err);
-  }
-}
-
-onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    window.location.href = "login.html";
-    return;
-  }
-
-  try {
-    const userDoc = await getDoc(doc(db, "users", user.uid));
-    if (!userDoc.exists()) {
-      alert("User data not found.");
-      await signOut(auth);
-      window.location.href = "login.html";
-      return;
-    }
-    const userData = userDoc.data();
-
-    if (userData.role !== "admin") {
-      alert("Access denied. Admins only.");
-      await signOut(auth);
-      window.location.href = "login.html";
-      return;
-    }
-
-    // সব ডাটা লোড করুন
-    loadUsers();
-    loadWithdrawRequests();
-    loadWithdrawHistory();
-
-  } catch (err) {
-    alert("Failed to verify user: " + err.message);
-    console.error(err);
-    await signOut(auth);
-    window.location.href = "login.html";
-  }
-});
-  </script>
+    window.copyReferCode = function () {
+      const code = document.getElementById("userReferCode").innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        alert("Refer code copied!");
+      });
+    };
+  </script>
 </body>
 </html>
