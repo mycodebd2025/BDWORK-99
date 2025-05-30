@@ -7,31 +7,34 @@
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@latest/dist/tailwind.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
-
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js" type="module"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js" type="module"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js" type="module"></script>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
-  <div class="bg-white shadow-md rounded-lg p-8 w-full max-w-md">
-    <h2 class="text-2xl font-bold mb-6 text-center">Sign Up</h2>
+  <div class="bg-white shadow-lg rounded-lg p-8 w-full max-w-md">
+    <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Create Account</h2>
 
     <input id="signupEmail" type="email" placeholder="Email" class="w-full mb-3 px-4 py-2 border rounded" />
     <input id="signupPassword" type="password" placeholder="Password" class="w-full mb-3 px-4 py-2 border rounded" />
     <input id="referCodeInput" type="text" placeholder="Referral Code (optional)" class="w-full mb-4 px-4 py-2 border rounded" />
 
-    <button onclick="signup()" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Sign Up</button>
+    <button onclick="signup()" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+      <i class="fas fa-user-plus mr-1"></i> Sign Up
+    </button>
     
-    <p class="text-sm text-center mt-4">Already have an account? <a href="index.html" class="text-blue-500 hover:underline">Login</a></p>
+    <p class="text-sm text-center mt-4">
+      Already have an account? 
+      <a href="index.html" class="text-blue-500 hover:underline">Login here</a>
+    </p>
   </div>
 
-  <!-- Firebase + Signup Logic -->
+  <!-- Firebase SDK -->
   <script type="module">
-    // Firebase config
+    // Firebase Config
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDocs, collection, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
       authDomain: "bdwork-346d3.firebaseapp.com",
@@ -42,27 +45,32 @@
       measurementId: "G-FM1YJ8E5GK"
     };
 
-    // Import Firebase modules
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDocs, collection, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Sign Up Function
+    // Signup Function
     window.signup = async function () {
-      const email = document.getElementById("signupEmail").value;
+      const email = document.getElementById("signupEmail").value.trim();
       const password = document.getElementById("signupPassword").value;
       const inputReferCode = document.getElementById("referCodeInput").value.trim();
+
+      if (!email || !password) {
+        alert("Please fill in all required fields.");
+        return;
+      }
+
+      if (password.length < 6) {
+        alert("Password must be at least 6 characters long.");
+        return;
+      }
 
       try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const uid = userCredential.user.uid;
 
-        // Store new user data with role 'user'
+        // Save user data to Firestore
         await setDoc(doc(db, "users", uid), {
           uid: uid,
           email: email,
@@ -72,16 +80,15 @@
           referredBy: inputReferCode || null
         });
 
-        // Handle referral bonus
-        if (inputReferCode) {
+        // If referral code is provided, reward the referrer
+        if (inputReferCode && inputReferCode !== uid) {
           const q = query(collection(db, "users"), where("uid", "==", inputReferCode));
           const querySnapshot = await getDocs(q);
 
           if (!querySnapshot.empty) {
             const referrerDoc = querySnapshot.docs[0];
             const referrerRef = doc(db, "users", referrerDoc.id);
-            const referrerData = referrerDoc.data();
-            const currentBalance = referrerData.balance || 0;
+            const currentBalance = referrerDoc.data().balance || 0;
 
             await updateDoc(referrerRef, {
               balance: currentBalance + 10
