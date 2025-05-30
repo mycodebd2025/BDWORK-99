@@ -61,12 +61,10 @@
       </div>
     </section>
 
-    <!-- Withdraw History -->
+    <!-- Withdraw History Redirect -->
     <section class="bg-white p-4 rounded-xl shadow-md mb-6">
       <h2 class="text-lg font-semibold mb-4">📜 Withdraw History</h2>
-      <div id="withdrawHistory" class="space-y-2">
-        <p class="text-sm text-gray-500 text-center">Loading history...</p>
-      </div>
+      <a href="withdraw-history.html" class="text-blue-600 hover:underline block text-center">View Withdraw History →</a>
     </section>
 
     <!-- Logout -->
@@ -116,34 +114,6 @@
           const referQuery = query(collection(db, "users"), where("referredBy", "==", user.uid));
           const referSnapshot = await getDocs(referQuery);
           document.getElementById("totalRefers").innerText = referSnapshot.size;
-
-          const withdrawQuery = query(collection(db, "withdraws"), where("uid", "==", user.uid));
-          const withdrawSnap = await getDocs(withdrawQuery);
-          const historyContainer = document.getElementById("withdrawHistory");
-
-          if (withdrawSnap.empty) {
-            historyContainer.innerHTML = '<p class="text-sm text-gray-500 text-center">No withdraw history found.</p>';
-          } else {
-            historyContainer.innerHTML = "";
-            withdrawSnap.forEach(doc => {
-              const data = doc.data();
-              const date = data.timestamp?.toDate().toLocaleString() || "Unknown time";
-              const item = document.createElement("div");
-              item.className = "bg-gray-100 p-3 rounded-md shadow-sm flex justify-between items-center text-sm";
-              item.innerHTML = `
-                <div>
-                  <p class="font-medium text-gray-700">৳${data.amount}</p>
-                  <p class="text-xs text-gray-500">${date}</p>
-                </div>
-                <span class="text-xs px-2 py-1 rounded-full ${
-                  data.status === "approved" ? "bg-green-100 text-green-700" :
-                  data.status === "rejected" ? "bg-red-100 text-red-700" :
-                  "bg-yellow-100 text-yellow-700"
-                }">${data.status}</span>
-              `;
-              historyContainer.appendChild(item);
-            });
-          }
         }
       } catch (err) {
         alert("Failed to load user data: " + err.message);
