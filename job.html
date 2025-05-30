@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>User Tasks</title>
+  <title>User Tasks with Link Visit</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 </head>
@@ -34,8 +34,6 @@
       doc,
       getDoc,
       updateDoc,
-      query,
-      where,
       onSnapshot
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -58,7 +56,6 @@
     const tasksContainer = document.getElementById("tasksContainer");
     const userBalanceElem = document.getElementById("userBalance");
 
-    // Load tasks and user data after login
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
         window.location.href = "login.html";
@@ -80,7 +77,6 @@
       userBalanceElem.innerText = `৳${(currentUserData.balance || 0).toFixed(2)}`;
     }
 
-    // Real-time load tasks from Firestore and render
     function loadTasksRealtime() {
       const tasksCol = collection(db, "tasks");
 
@@ -110,10 +106,19 @@
           btn.className = done
             ? "mt-4 md:mt-0 bg-gray-400 text-white py-2 px-4 rounded cursor-not-allowed font-semibold"
             : "mt-4 md:mt-0 bg-indigo-600 text-white py-2 px-4 rounded hover:bg-indigo-700 font-semibold transition";
-          btn.innerText = done ? "Completed ✓" : "Complete Task";
+          btn.innerText = done ? "Completed ✓" : "Visit Link & Complete";
 
           btn.disabled = done;
-          btn.onclick = () => completeTask(task);
+          btn.onclick = () => {
+            if (!task.link) {
+              alert("No link provided for this task.");
+              return;
+            }
+            // Open the link in a new tab
+            window.open(task.link, "_blank");
+            // Then mark task completed & reward user
+            completeTask(task);
+          };
 
           taskDiv.appendChild(btn);
           tasksContainer.appendChild(taskDiv);
@@ -131,7 +136,6 @@
       try {
         const userDocRef = doc(db, "users", currentUserId);
 
-        // Update tasksCompleted and add reward to balance atomically
         const newBalance = (currentUserData.balance || 0) + task.reward;
         const updatedTasksCompleted = { ...(currentUserData.tasksCompleted || {}) };
         updatedTasksCompleted[task.id] = true;
@@ -141,7 +145,6 @@
           tasksCompleted: updatedTasksCompleted
         });
 
-        // Update local data and UI
         currentUserData.balance = newBalance;
         currentUserData.tasksCompleted = updatedTasksCompleted;
         userBalanceElem.innerText = `৳${newBalance.toFixed(2)}`;
