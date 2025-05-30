@@ -9,10 +9,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 </head>
-<body class="bg-gradient-to-tr from-blue-50 to-purple-100 min-h-screen flex items-center justify-center p-4">
+<body class="bg-gradient-to-tr from-blue-50 to-purple-100 min-h-screen flex items-center justify-center px-4">
 
-  <div class="bg-white shadow-2xl rounded-2xl p-8 max-w-lg w-full space-y-6">
-    <h2 class="text-3xl font-bold text-gray-800 text-center">👋 Welcome to Your Dashboard</h2>
+  <main class="w-full max-w-lg bg-white shadow-2xl rounded-2xl p-6 md:p-8 space-y-6 overflow-hidden">
+    <h2 class="text-2xl md:text-3xl font-bold text-gray-800 text-center">👋 Welcome to Your Dashboard</h2>
 
     <!-- User Info -->
     <div class="grid gap-4">
@@ -62,7 +62,7 @@
     <button onclick="logout()" class="w-full bg-red-600 text-white py-2 rounded-md hover:bg-red-700">
       <i class="fas fa-sign-out-alt mr-1"></i> Logout
     </button>
-  </div>
+  </main>
 
   <!-- Firebase SDKs -->
   <script type="module">
