@@ -1,4 +1,3 @@
-<!-- withdraw-history.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -32,7 +31,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import {
-      getFirestore, collection, query, where, getDocs
+      getFirestore, collection, query, where, getDocs, orderBy
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const app = initializeApp(firebaseConfig);
@@ -41,10 +40,16 @@
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) return window.location.href = "login.html";
+
       const historyContainer = document.getElementById("withdrawHistory");
 
       try {
-        const withdrawQuery = query(collection(db, "withdraws"), where("uid", "==", user.uid));
+        const withdrawQuery = query(
+          collection(db, "withdraws"),
+          where("uid", "==", user.uid),
+          orderBy("timestamp", "desc") // Sort by time descending
+        );
+
         const withdrawSnap = await getDocs(withdrawQuery);
 
         if (withdrawSnap.empty) {
