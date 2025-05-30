@@ -8,6 +8,21 @@
   <!-- TailwindCSS & FontAwesome -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+
+  <style>
+    /* Scrollable tbody */
+    tbody {
+      display: block;
+      max-height: 400px; /* তুমি চাইলে এটার মান বাড়াবা/কমাবা */
+      overflow-y: auto;
+      width: 100%;
+    }
+    thead, tbody tr {
+      display: table;
+      width: 100%;
+      table-layout: fixed;
+    }
+  </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
 
@@ -22,7 +37,7 @@
     <h2 class="text-2xl font-semibold mb-6">Users Management</h2>
 
     <table class="w-full border-collapse border border-gray-300 bg-white rounded shadow overflow-hidden">
-      <thead class="bg-gray-200">
+      <thead class="bg-gray-200 sticky top-0 z-10">
         <tr>
           <th class="p-3 border border-gray-300 text-left">Email</th>
           <th class="p-3 border border-gray-300 text-left">Balance (৳)</th>
@@ -92,7 +107,7 @@
           const user = docSnap.data();
           rowsHtml += `
             <tr class="border-t border-gray-200 hover:bg-gray-50">
-              <td class="p-3 border border-gray-300">${user.email || "N/A"}</td>
+              <td class="p-3 border border-gray-300 break-words max-w-xs">${user.email || "N/A"}</td>
               <td class="p-3 border border-gray-300">
                 <input type="number" min="0" step="0.01" value="${user.balance || 0}" class="balance-input border rounded px-2 py-1 w-28" data-uid="${docSnap.id}" />
               </td>
