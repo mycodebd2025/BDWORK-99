@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" >
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -10,7 +10,7 @@
 <body class="bg-gray-100 text-gray-900">
 
   <main class="max-w-3xl mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-6 text-center">🎯 Visit & Earn Tasks</h1>
+    <h1 class="text-3xl font-bold mb-6 text-center">🎯 Your Tasks</h1>
 
     <section class="mb-6 bg-white rounded shadow p-4">
       <p class="mb-2 text-gray-600">Balance: <span id="userBalance" class="font-semibold text-green-600">৳0</span></p>
@@ -30,9 +30,12 @@
     import {
       getFirestore,
       collection,
+      getDocs,
       doc,
       getDoc,
       updateDoc,
+      query,
+      where,
       onSnapshot
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -42,7 +45,8 @@
       projectId: "bdwork-346d3",
       storageBucket: "bdwork-346d3.appspot.com",
       messagingSenderId: "900963179093",
-      appId: "1:900963179093:web:81e42d67bb31d603cc92dc"
+      appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
+      measurementId: "G-FM1YJ8E5GK"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -54,6 +58,7 @@
     const tasksContainer = document.getElementById("tasksContainer");
     const userBalanceElem = document.getElementById("userBalance");
 
+    // Load tasks and user data after login
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
         window.location.href = "login.html";
@@ -75,6 +80,7 @@
       userBalanceElem.innerText = `৳${(currentUserData.balance || 0).toFixed(2)}`;
     }
 
+    // Real-time load tasks from Firestore and render
     function loadTasksRealtime() {
       const tasksCol = collection(db, "tasks");
 
@@ -103,11 +109,11 @@
           const btn = document.createElement("button");
           btn.className = done
             ? "mt-4 md:mt-0 bg-gray-400 text-white py-2 px-4 rounded cursor-not-allowed font-semibold"
-            : "mt-4 md:mt-0 bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 font-semibold transition";
-          btn.innerText = done ? "Completed ✓" : "Visit & Earn";
+            : "mt-4 md:mt-0 bg-indigo-600 text-white py-2 px-4 rounded hover:bg-indigo-700 font-semibold transition";
+          btn.innerText = done ? "Completed ✓" : "Complete Task";
 
           btn.disabled = done;
-          btn.onclick = () => visitAndCompleteTask(task);
+          btn.onclick = () => completeTask(task);
 
           taskDiv.appendChild(btn);
           tasksContainer.appendChild(taskDiv);
@@ -115,36 +121,37 @@
       });
     }
 
-    function visitAndCompleteTask(task) {
-      if (!task.url) return alert("No URL found for this task.");
-      if (currentUserData.tasksCompleted?.[task.id]) return alert("Task already completed.");
+    async function completeTask(task) {
+      if (!currentUserData) return alert("User data not loaded.");
 
-      const visitWindow = window.open(task.url, "_blank");
-
-      if (!visitWindow) {
-        return alert("Please allow popups to complete this task.");
+      if (currentUserData.tasksCompleted?.[task.id]) {
+        return alert("Task already completed.");
       }
 
-      setTimeout(async () => {
-        try {
-          const newBalance = (currentUserData.balance || 0) + task.reward;
-          const updatedTasksCompleted = { ...(currentUserData.tasksCompleted || {}) };
-          updatedTasksCompleted[task.id] = true;
+      try {
+        const userDocRef = doc(db, "users", currentUserId);
 
-          await updateDoc(doc(db, "users", currentUserId), {
-            balance: newBalance,
-            tasksCompleted: updatedTasksCompleted
-          });
+        // Update tasksCompleted and add reward to balance atomically
+        const newBalance = (currentUserData.balance || 0) + task.reward;
+        const updatedTasksCompleted = { ...(currentUserData.tasksCompleted || {}) };
+        updatedTasksCompleted[task.id] = true;
 
-          currentUserData.balance = newBalance;
-          currentUserData.tasksCompleted = updatedTasksCompleted;
-          userBalanceElem.innerText = `৳${newBalance.toFixed(2)}`;
-          alert(`✅ You earned ৳${task.reward.toFixed(2)} by visiting!`);
-        } catch (err) {
-          alert("Error: " + err.message);
-        }
-      }, 7000); // Wait 7 seconds
+        await updateDoc(userDocRef, {
+          balance: newBalance,
+          tasksCompleted: updatedTasksCompleted
+        });
+
+        // Update local data and UI
+        currentUserData.balance = newBalance;
+        currentUserData.tasksCompleted = updatedTasksCompleted;
+        userBalanceElem.innerText = `৳${newBalance.toFixed(2)}`;
+
+        alert(`Task completed! You earned ৳${task.reward.toFixed(2)}.`);
+      } catch (err) {
+        alert("Error completing task: " + err.message);
+      }
     }
   </script>
+
 </body>
 </html>
