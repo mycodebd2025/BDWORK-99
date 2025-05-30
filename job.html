@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Jobs</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-blue-50 min-h-screen flex items-center justify-center px-4">
+  <main class="w-full max-w-md bg-white shadow-xl rounded-2xl p-6 space-y-6">
+    <h2 class="text-2xl font-bold text-center text-gray-800">📸 Complete 4 Jobs</h2>
+    
+    <form id="jobForm" class="space-y-4">
+      <div class="grid gap-3">
+        <label class="block">
+          <span class="text-sm text-gray-700">Screenshot 1</span>
+          <input type="file" accept="image/*" name="ss1" required class="block w-full mt-1 border border-gray-300 p-2 rounded" />
+        </label>
+        <label class="block">
+          <span class="text-sm text-gray-700">Screenshot 2</span>
+          <input type="file" accept="image/*" name="ss2" required class="block w-full mt-1 border border-gray-300 p-2 rounded" />
+        </label>
+        <label class="block">
+          <span class="text-sm text-gray-700">Screenshot 3</span>
+          <input type="file" accept="image/*" name="ss3" required class="block w-full mt-1 border border-gray-300 p-2 rounded" />
+        </label>
+        <label class="block">
+          <span class="text-sm text-gray-700">Screenshot 4</span>
+          <input type="file" accept="image/*" name="ss4" required class="block w-full mt-1 border border-gray-300 p-2 rounded" />
+        </label>
+      </div>
+
+      <button 
+        type="submit"
+        class="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700"
+      >
+        Submit Job
+      </button>
+    </form>
+
+    <div id="message" class="text-center text-sm text-gray-600"></div>
+  </main>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, updateDoc, getDoc, collection, addDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
+      authDomain: "bdwork-346d3.firebaseapp.com",
+      projectId: "bdwork-346d3",
+      storageBucket: "bdwork-346d3.appspot.com",
+      messagingSenderId: "900963179093",
+      appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
+      measurementId: "G-FM1YJ8E5GK"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    let currentUser = null;
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = "login.html";
+      } else {
+        currentUser = user;
+      }
+    });
+
+    const form = document.getElementById("jobForm");
+    const messageDiv = document.getElementById("message");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!currentUser) return;
+
+      const files = Array.from(form.elements)
+        .filter(el => el.type === "file")
+        .map(input => input.files[0]);
+
+      if (files.length !== 4 || files.some(file => !file)) {
+        alert("Please upload all 4 screenshots.");
+        return;
+      }
+
+      try {
+        const urls = [];
+
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const storageRef = ref(storage, `jobs/${currentUser.uid}/job${i+1}_${Date.now()}`);
+          await uploadBytes(storageRef, file);
+          const downloadURL = await getDownloadURL(storageRef);
+          urls.push(downloadURL);
+        }
+
+        await addDoc(collection(db, "jobs"), {
+          uid: currentUser.uid,
+          screenshots: urls,
+          submittedAt: Timestamp.now(),
+        });
+
+        const userRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        const userData = userSnap.data();
+        const newBalance = (userData.balance || 0) + 5;
+        await updateDoc(userRef, { balance: newBalance });
+
+        messageDiv.innerText = "✅ Job submitted successfully! ৫৳ ব্যালেন্সে যোগ হয়েছে।";
+        form.reset();
+      } catch (err) {
+        alert("Failed to submit job: " + err.message);
+      }
+    });
+  </script>
+</body>
+</html>
