@@ -1,245 +1,258 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>User Tasks</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.12/dist/sweetalert2.min.css" rel="stylesheet" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>User Tasks</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.12/dist/sweetalert2.min.css" rel="stylesheet" />
 </head>
 <body class="bg-gray-100 text-gray-900 min-h-screen flex flex-col">
 
-  <main class="max-w-4xl mx-auto p-6 flex-grow">
-    <!-- Back to Dashboard Button -->
-    <div class="mb-4">
-      <a href="dashboard.html" class="inline-flex items-center text-indigo-600 hover:text-indigo-800 transition text-sm font-medium">
-        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
-      </a>
-    </div>
+  <main class="max-w-4xl mx-auto p-6 flex-grow">
+    <!-- Back to Dashboard Button -->
+    <div class="mb-4">
+      <a href="dashboard.html" class="inline-flex items-center text-indigo-600 hover:text-indigo-800 transition text-sm font-medium">
+        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+      </a>
+    </div>
 
-    <h1 class="text-4xl font-extrabold mb-8 text-center text-indigo-700 select-none">📝 Available Tasks</h1>
+    <h1 class="text-4xl font-extrabold mb-8 text-center text-indigo-700 select-none">📝 Available Tasks</h1>
 
-    <section class="mb-10 p-6 bg-white rounded-xl shadow-md text-center">
-      <p class="text-xl font-semibold text-gray-800">
-        Your Balance: <span class="text-indigo-600">৳</span><span id="userBalance">0.00</span>
-      </p>
-    </section>
+    <section class="mb-10 p-6 bg-white rounded-xl shadow-md text-center">
+      <p class="text-xl font-semibold text-gray-800">
+        Your Balance: <span class="text-indigo-600">৳</span><span id="userBalance">0.00</span>
+      </p>
+    </section>
 
-    <section>
-      <div id="tasksList" class="space-y-6">
-        <p class="text-center text-gray-500 text-lg">Loading tasks...</p>
-      </div>
-    </section>
-  </main>
+    <section>
+      <div id="tasksList" class="space-y-6">
+        <p class="text-center text-gray-500 text-lg">Loading tasks...</p>
+      </div>
+    </section>
+  </main>
 
-  <footer class="bg-white text-center py-4 text-gray-500 select-none">
-    &copy; 2025 Your Company
-  </footer>
+  <footer class="bg-white text-center py-4 text-gray-500 select-none">
+    &copy; 2025 Your Company
+  </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.12/dist/sweetalert2.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.12/dist/sweetalert2.all.min.js"></script>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import {
-      getFirestore, collection, onSnapshot, doc, getDoc, updateDoc, addDoc, serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import {
-      getAuth, onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import {
-      getStorage, ref, uploadBytes, getDownloadURL
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getFirestore, collection, onSnapshot, doc, getDoc, updateDoc, addDoc, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import {
+      getAuth, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import {
+      getStorage, ref, uploadBytes, getDownloadURL
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
-      authDomain: "bdwork-346d3.firebaseapp.com",
-      projectId: "bdwork-346d3",
-      storageBucket: "bdwork-346d3.appspot.com",
-      messagingSenderId: "900963179093",
-      appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
-      measurementId: "G-FM1YJ8E5GK"
-    };
+    const firebaseConfig = {
+      apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
+      authDomain: "bdwork-346d3.firebaseapp.com",
+      projectId: "bdwork-346d3",
+      storageBucket: "bdwork-346d3.appspot.com",
+      messagingSenderId: "900963179093",
+      appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
+      measurementId: "G-FM1YJ8E5GK"
+    };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-    const storage = getStorage(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const storage = getStorage(app);
 
-    const tasksList = document.getElementById("tasksList");
-    const userBalanceSpan = document.getElementById("userBalance");
+    const tasksList = document.getElementById("tasksList");
+    const userBalanceSpan = document.getElementById("userBalance");
 
-    let currentUser = null;
-    let userData = null;
+    let currentUser = null;
+    let userData = null;
 
-    const toast = Swal.mixin({
-      toast: true,
-      position: 'top-end',
-      showConfirmButton: false,
-      timer: 3000,
-      timerProgressBar: true,
-      didOpen: (toast) => {
-        toast.addEventListener('mouseenter', Swal.stopTimer)
-        toast.addEventListener('mouseleave', Swal.resumeTimer)
-      }
-    });
+    const toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+      didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer)
+        toast.addEventListener('mouseleave', Swal.resumeTimer)
+      }
+    });
 
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'Please log in to view tasks.',
-          showConfirmButton: false,
-          timer: 1500,
-          position: 'top-end'
-        });
-        setTimeout(() => {
-          window.location.href = "login.html";
-        }, 1500);
-        return;
-      }
-      currentUser = user;
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Please log in to view tasks.',
+          showConfirmButton: false,
+          timer: 1500,
+          position: 'top-end'
+        });
+        setTimeout(() => {
+          window.location.href = "login.html";
+        }, 1500);
+        return;
+      }
+      currentUser = user;
 
-      const userDocRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userDocRef);
-      if (userSnap.exists()) {
-        userData = userSnap.data();
-        userBalanceSpan.textContent = (userData.balance || 0).toFixed(2);
-      } else {
-        userBalanceSpan.textContent = "0.00";
-        userData = { balance: 0, completedTasks: [] };
-      }
+      const userDocRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userDocRef);
+      if (userSnap.exists()) {
+        userData = userSnap.data();
+        userBalanceSpan.textContent = (userData.balance || 0).toFixed(2);
+      } else {
+        userBalanceSpan.textContent = "0.00";
+        userData = { balance: 0, completedTasks: [] };
+      }
 
-      loadTasks();
-    });
+      loadTasks();
+    });
 
-    function loadTasks() {
-      const tasksCol = collection(db, "tasks");
+    function loadTasks() {
+      const tasksCol = collection(db, "tasks");
 
-      onSnapshot(tasksCol, (snapshot) => {
-        if (snapshot.empty) {
-          tasksList.innerHTML = "<p class='text-center text-gray-500 text-lg'>No tasks available right now.</p>";
-          return;
-        }
+      onSnapshot(tasksCol, (snapshot) => {
+        if (snapshot.empty) {
+          tasksList.innerHTML = "<p class='text-center text-gray-500 text-lg'>No tasks available right now.</p>";
+          return;
+        }
 
-        tasksList.innerHTML = "";
-        snapshot.forEach(docSnap => {
-          const task = { id: docSnap.id, ...docSnap.data() };
+        tasksList.innerHTML = "";
+        snapshot.forEach(docSnap => {
+          const task = { id: docSnap.id, ...docSnap.data() };
+          const completed = userData.completedTasks?.includes(task.id);
 
-          const completed = userData.completedTasks?.includes(task.id);
+          const taskDiv = document.createElement("div");
+          taskDiv.className = "p-6 bg-white rounded-xl shadow hover:shadow-lg transition-shadow duration-300";
 
-          const taskDiv = document.createElement("div");
-          taskDiv.className = "p-6 bg-white rounded-xl shadow hover:shadow-lg transition-shadow duration-300";
+          let taskHtml = `
+            <p class="font-semibold text-2xl text-indigo-700 mb-2">${task.name}</p>
+            <p class="text-gray-700 mb-3">${task.description || ""}</p>
+            <p class="font-semibold text-indigo-600 mb-4">Reward: ৳${typeof task.reward === 'number' ? task.reward.toFixed(2) : '0.00'}</p>
+          `;
 
-          let taskHtml = `
-            <p class="font-semibold text-2xl text-indigo-700 mb-2">${task.name}</p>
-            <p class="text-gray-700 mb-3">${task.description || ""}</p>
-            <p class="font-semibold text-indigo-600 mb-4">Reward: ৳${typeof task.reward === 'number' ? task.reward.toFixed(2) : '0.00'}</p>
-          `;
+          if (task.view) {
+            taskHtml += `<p><a href="${task.view}" target="_blank" class="inline-block mt-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition">View Task Details <i class="fa-solid fa-arrow-up-right-from-square ml-1"></i></a></p>`;
+          }
 
-          if (task.view) {
-            taskHtml += `<p><a href="${task.view}" target="_blank" class="inline-block mt-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition">View Task Details <i class="fa-solid fa-arrow-up-right-from-square ml-1"></i></a></p>`;
-          }
+          if (completed) {
+            taskHtml += `<p class="mt-3 px-4 py-2 bg-yellow-500 text-white rounded select-none text-center font-semibold">⏳ Pending Admin Approval</p>`;
+          } else {
+            taskHtml += `
+              <form class="mt-4 space-y-3" data-task-id="${task.id}">
+                <label class="block">
+                  <span class="text-gray-700">Upload Screenshot 1:</span>
+                  <input type="file" accept="image/*" name="screenshot1" class="mt-1 block w-full border border-gray-300 rounded-md p-2 file:border-0 file:bg-indigo-100 file:text-indigo-700 file:rounded file:font-semibold" required />
+                </label>
+                <label class="block">
+                  <span class="text-gray-700">Upload Screenshot 2:</span>
+                  <input type="file" accept="image/*" name="screenshot2" class="mt-1 block w-full border border-gray-300 rounded-md p-2 file:border-0 file:bg-indigo-100 file:text-indigo-700 file:rounded file:font-semibold" required />
+                </label>
+                <button type="submit" class="mt-3 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition w-full">Submit</button>
+              </form>
+            `;
+          }
 
-          if (completed) {
-            taskHtml += `<p class="mt-3 px-4 py-2 bg-yellow-500 text-white rounded select-none text-center font-semibold">⏳ Pending Admin Approval</p>`;
-          } else {
-            taskHtml += `
-              <form class="mt-4 space-y-3" data-task-id="${task.id}">
-                <label class="block">
-                  <span class="text-gray-700">Upload Screenshot 1:</span>
-                  <input type="file" accept="image/*" name="screenshot1" class="mt-1 block w-full border border-gray-300 rounded-md p-2 file:border-0 file:bg-indigo-100 file:text-indigo-700 file:rounded file:font-semibold" required />
-                </label>
-                <label class="block">
-                  <span class="text-gray-700">Upload Screenshot 2:</span>
-                  <input type="file" accept="image/*" name="screenshot2" class="mt-1 block w-full border border-gray-300 rounded-md p-2 file:border-0 file:bg-indigo-100 file:text-indigo-700 file:rounded file:font-semibold" required />
-                </label>
-                <button type="submit" class="mt-3 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition w-full">Submit</button>
-              </form>
-            `;
-          }
+          taskDiv.innerHTML = taskHtml;
+          tasksList.appendChild(taskDiv);
 
-          taskDiv.innerHTML = taskHtml;
-          tasksList.appendChild(taskDiv);
+          if (!completed) {
+            const form = taskDiv.querySelector("form");
+            form.addEventListener("submit", async (e) => {
+              e.preventDefault();
 
-          if (!completed) {
-            const form = taskDiv.querySelector("form");
-            form.addEventListener("submit", async (e) => {
-              e.preventDefault();
-              const input1 = form.querySelector('input[name="screenshot1"]');
-              const input2 = form.querySelector('input[name="screenshot2"]');
+              const input1 = form.querySelector('input[name="screenshot1"]');
+              const input2 = form.querySelector('input[name="screenshot2"]');
 
-              if (!(input1.files.length && input2.files.length)) {
-                Swal.fire({
-                  icon: 'warning',
-                  title: 'Please upload both screenshots before submitting.',
-                  position: 'top-end',
-                  toast: true,
-                  showConfirmButton: false,
-                  timer: 3000
-                });
-                return;
-              }
+              if (!(input1.files.length && input2.files.length)) {
+                Swal.fire({
+                  icon: 'warning',
+                  title: 'Please upload both screenshots before submitting.',
+                  position: 'top-end',
+                  toast: true,
+                  showConfirmButton: false,
+                  timer: 3000,
+                  timerProgressBar: true
+                });
+                return;
+              }
 
-              await submitTask(task, input1.files[0], input2.files[0]);
-            });
-          }
-        });
-      });
-    }
+              await submitTask(task, input1.files[0], input2.files[0]);
+            });
+          }
+        });
+      });
+    }
 
-    async function submitTask(task, file1, file2) {
-      if (!currentUser) {
-        toast.fire({ icon: 'error', title: "User not logged in" });
-        return;
-      }
+    async function submitTask(task, file1, file2) {
+      if (!currentUser) {
+        toast.fire({ icon: 'error', title: "User not logged in" });
+        return;
+      }
 
-      try {
-        const userRef = doc(db, "users", currentUser.uid);
-        const userSnap = await getDoc(userRef);
-        if (!userSnap.exists()) {
-          toast.fire({ icon: 'error', title: "User not found" });
-          return;
-        }
+      try {
+        const userRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        if (!userSnap.exists()) {
+          toast.fire({ icon: 'error', title: "User not found" });
+          return;
+        }
 
-        const timestamp = Date.now();
-        const folderPath = `taskSubmissions/${currentUser.uid}/${task.id}_${timestamp}`;
+        const timestamp = Date.now();
+        const folderPath = `taskSubmissions/${currentUser.uid}/${task.id}_${timestamp}`;
 
-        const file1Ref = ref(storage, `${folderPath}/screenshot1_${timestamp}`);
-        const file2Ref = ref(storage, `${folderPath}/screenshot2_${timestamp}`);
+        const file1Ref = ref(storage, `${folderPath}/screenshot1`);
+        const file2Ref = ref(storage, `${folderPath}/screenshot2`);
 
-        const [snap1, snap2] = await Promise.all([
-          uploadBytes(file1Ref, file1),
-          uploadBytes(file2Ref, file2)
-        ]);
+        const [snap1, snap2] = await Promise.all([
+          uploadBytes(file1Ref, file1),
+          uploadBytes(file2Ref, file2)
+        ]);
 
-        const url1 = await getDownloadURL(snap1.ref);
-        const url2 = await getDownloadURL(snap2.ref);
+        const url1 = await getDownloadURL(snap1.ref);
+        const url2 = await getDownloadURL(snap2.ref);
 
-        await addDoc(collection(db, "taskSubmissions"), {
-          userId: currentUser.uid,
-          taskId: task.id,
-          taskName: task.name,
-          reward: task.reward || 0,
-          status: "pending",
-          screenshots: [url1, url2],
-          submittedAt: serverTimestamp(),
-          decidedAt: null
-        });
+        const submissionData = {
+          userId: currentUser.uid,
+          taskId: task.id,
+          taskName: task.name,
+          reward: task.reward || 0,
+          screenshots: [url1, url2],
+          status: "pending",
+          submittedAt: serverTimestamp(),
+          decidedAt: null
+        };
 
-        const completedTasks = userSnap.data().completedTasks || [];
-        if (!completedTasks.includes(task.id)) {
-          completedTasks.push(task.id);
-          await updateDoc(userRef, { completedTasks });
-          userData.completedTasks = completedTasks;
-        }
+        await addDoc(collection(db, "taskSubmissions"), submissionData);
 
-        toast.fire({ icon: 'success', title: 'Task submitted successfully, pending admin approval!' });
-      } catch (err) {
-        console.error("Submission error:", err);
-        toast.fire({ icon: 'error', title: 'Submission failed. Try again later.' });
-      }
-    }
-  </script>
+        const updatedTasks = userSnap.data().completedTasks || [];
+        if (!updatedTasks.includes(task.id)) {
+          updatedTasks.push(task.id);
+          await updateDoc(userRef, { completedTasks: updatedTasks });
+          userData.completedTasks = updatedTasks;
+        }
+
+        toast.fire({ icon: 'success', title: 'Task submitted successfully. Waiting for admin approval!' });
+
+      } catch (error) {
+        console.error("Submission error:", error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Submission Failed',
+          text: 'Please try again later.',
+          position: 'top-end',
+          toast: true,
+          showConfirmButton: false,
+          timer: 3500,
+          timerProgressBar: true
+        });
+      }
+    }
+  </script>
 </body>
 </html>
