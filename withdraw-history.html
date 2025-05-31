@@ -58,18 +58,22 @@
           withdrawSnap.forEach(doc => {
             const data = doc.data();
             const date = data.timestamp?.toDate().toLocaleString() || "Unknown time";
+            const method = data.method || "Unknown";
+            const address = data.address || "N/A";
             const item = document.createElement("div");
-            item.className = "bg-white p-3 rounded-md shadow-sm flex justify-between items-center text-sm";
+            item.className = "bg-white p-4 rounded-md shadow-sm text-sm space-y-1 border border-gray-200";
             item.innerHTML = `
-              <div>
-                <p class="font-medium text-gray-700">৳${data.amount}</p>
-                <p class="text-xs text-gray-500">${date}</p>
+              <div class="flex justify-between items-center">
+                <p class="font-medium text-gray-800">৳${data.amount}</p>
+                <span class="text-xs px-2 py-1 rounded-full ${
+                  data.status === "approved" ? "bg-green-100 text-green-700" :
+                  data.status === "rejected" ? "bg-red-100 text-red-700" :
+                  "bg-yellow-100 text-yellow-700"
+                }">${data.status}</span>
               </div>
-              <span class="text-xs px-2 py-1 rounded-full ${
-                data.status === "approved" ? "bg-green-100 text-green-700" :
-                data.status === "rejected" ? "bg-red-100 text-red-700" :
-                "bg-yellow-100 text-yellow-700"
-              }">${data.status}</span>
+              <p class="text-gray-600"><span class="font-medium">Method:</span> ${method}</p>
+              <p class="text-gray-600"><span class="font-medium">Address:</span> ${address}</p>
+              <p class="text-xs text-gray-500">${date}</p>
             `;
             historyContainer.appendChild(item);
           });
