@@ -1,21 +1,20 @@
 <!DOCTYPE html>
-<html lang="en" >
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Admin Panel</title>
-
-  <!-- TailwindCSS & FontAwesome -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
 
+  <!-- Header -->
   <header class="bg-blue-600 text-white p-4 flex justify-between items-center">
     <h1 class="text-xl font-bold">Admin Panel</h1>
     <div class="flex items-center space-x-4">
-      <button id="withdrawRequestsBtn" class="bg-yellow-500 hover:bg-yellow-600 px-4 py-2 rounded flex items-center text-white">
-        <i class="fas fa-hand-holding-usd mr-2"></i> Withdraw Requests
+      <button id="withdrawHistoryBtn" class="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded flex items-center text-white">
+        <i class="fas fa-clock-rotate-left mr-2"></i> Withdraw History
       </button>
       <button id="logoutBtn" class="bg-red-600 px-4 py-2 rounded hover:bg-red-700 flex items-center">
         <i class="fas fa-sign-out-alt mr-2"></i> Logout
@@ -23,9 +22,8 @@
     </div>
   </header>
 
-  <main class="flex-grow p-6 max-w-7xl mx-auto w-full space-y-10">
-
-    <!-- Users Management -->
+  <!-- Main Content -->
+  <main class="flex-grow p-6 max-w-6xl mx-auto w-full">
     <section>
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-2xl font-semibold">Users Management</h2>
@@ -48,30 +46,9 @@
         </table>
       </div>
     </section>
-
-    <!-- Withdraw History -->
-    <section>
-      <h2 class="text-2xl font-semibold mb-6">Withdraw History (All Statuses)</h2>
-
-      <div class="overflow-x-auto border rounded shadow bg-white max-h-80">
-        <table class="w-full min-w-[600px] border-collapse border border-gray-300">
-          <thead class="bg-gray-200 sticky top-0 z-10">
-            <tr>
-              <th class="p-3 border border-gray-300 text-left">User Email</th>
-              <th class="p-3 border border-gray-300 text-left">Amount (৳)</th>
-              <th class="p-3 border border-gray-300 text-left">Date & Time</th>
-              <th class="p-3 border border-gray-300 text-left">Status</th>
-            </tr>
-          </thead>
-          <tbody id="withdrawHistoryBody">
-            <tr><td colspan="4" class="p-4 text-center text-gray-500">Loading withdraw history...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
   </main>
 
+  <!-- Firebase and Logic -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import {
@@ -84,9 +61,7 @@
       collection,
       getDocs,
       doc,
-      updateDoc,
-      query,
-      orderBy,
+      updateDoc
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -104,9 +79,8 @@
     const db = getFirestore(app);
 
     const usersTableBody = document.getElementById("usersTableBody");
-    const withdrawHistoryBody = document.getElementById("withdrawHistoryBody");
     const logoutBtn = document.getElementById("logoutBtn");
-    const withdrawRequestsBtn = document.getElementById("withdrawRequestsBtn");
+    const withdrawHistoryBtn = document.getElementById("withdrawHistoryBtn");
     const totalUsersCountElem = document.getElementById("totalUsersCount");
 
     logoutBtn.addEventListener("click", async () => {
@@ -114,8 +88,8 @@
       window.location.href = "login.html";
     });
 
-    withdrawRequestsBtn.addEventListener("click", () => {
-      window.location.href = "withdraw-requests.html";
+    withdrawHistoryBtn.addEventListener("click", () => {
+      window.location.href = "withdraw-history.html";
     });
 
     onAuthStateChanged(auth, user => {
@@ -124,7 +98,6 @@
       } else {
         loadTotalUsersCount();
         loadUsers();
-        loadWithdrawHistory();
       }
     });
 
@@ -132,16 +105,14 @@
       try {
         const usersCol = collection(db, "users");
         const usersSnapshot = await getDocs(usersCol);
-        const count = usersSnapshot.size;
-        totalUsersCountElem.textContent = `Total Users: ${count}`;
+        totalUsersCountElem.textContent = `Total Users: ${usersSnapshot.size}`;
       } catch (err) {
         totalUsersCountElem.textContent = "Total Users: Error";
-        console.error("Error loading total users count:", err);
+        console.error("Error loading user count:", err);
       }
     }
 
     async function loadUsers() {
-      usersTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">Loading users...</td></tr>`;
       try {
         const usersCol = collection(db, "users");
         const usersSnapshot = await getDocs(usersCol);
@@ -177,22 +148,17 @@
 
         usersTableBody.innerHTML = rowsHtml;
 
-        // Role update event
+        // Role update
         document.querySelectorAll(".role-select").forEach(select => {
           select.addEventListener("change", async (e) => {
             const uid = e.target.getAttribute("data-uid");
             const newRole = e.target.value;
-            try {
-              await updateDoc(doc(db, "users", uid), { role: newRole });
-              alert(`User role updated to "${newRole}"`);
-            } catch (err) {
-              alert("Failed to update role: " + err.message);
-              console.error(err);
-            }
+            await updateDoc(doc(db, "users", uid), { role: newRole });
+            alert(`User role updated to "${newRole}"`);
           });
         });
 
-        // Balance update event
+        // Balance update
         document.querySelectorAll(".update-balance-btn").forEach(btn => {
           btn.addEventListener("click", async (e) => {
             const uid = e.target.getAttribute("data-uid");
@@ -202,55 +168,14 @@
               alert("Please enter a valid non-negative balance.");
               return;
             }
-            try {
-              await updateDoc(doc(db, "users", uid), { balance: newBalance });
-              alert("Balance updated successfully.");
-            } catch (err) {
-              alert("Failed to update balance: " + err.message);
-              console.error(err);
-            }
+            await updateDoc(doc(db, "users", uid), { balance: newBalance });
+            alert("Balance updated successfully.");
           });
         });
 
       } catch (error) {
         usersTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-600">Error loading users: ${error.message}</td></tr>`;
         console.error("Error loading users:", error);
-      }
-    }
-
-    async function loadWithdrawHistory() {
-      withdrawHistoryBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">Loading withdraw history...</td></tr>`;
-      try {
-        const withdrawsCol = collection(db, "withdraws");
-        const q = query(withdrawsCol, orderBy("timestamp", "desc"));
-        const withdrawsSnapshot = await getDocs(q);
-
-        if (withdrawsSnapshot.empty) {
-          withdrawHistoryBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">No withdraw history found.</td></tr>`;
-          return;
-        }
-
-        let rowsHtml = "";
-        withdrawsSnapshot.forEach(docSnap => {
-          const wd = docSnap.data();
-          const dateStr = wd.timestamp?.toDate ? wd.timestamp.toDate().toLocaleString() : "N/A";
-          const status = wd.status || "unknown";
-
-          rowsHtml += `
-            <tr class="border-t border-gray-200 hover:bg-gray-50">
-              <td class="p-3 border border-gray-300">${wd.userEmail || "N/A"}</td>
-              <td class="p-3 border border-gray-300">৳${wd.amount || 0}</td>
-              <td class="p-3 border border-gray-300">${dateStr}</td>
-              <td class="p-3 border border-gray-300 capitalize">${status}</td>
-            </tr>
-          `;
-        });
-
-        withdrawHistoryBody.innerHTML = rowsHtml;
-
-      } catch (err) {
-        withdrawHistoryBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-600">Error loading withdraw history: ${err.message}</td></tr>`;
-        console.error(err);
       }
     }
   </script>
