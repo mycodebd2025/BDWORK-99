@@ -5,27 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>User Tasks</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body class="bg-gray-100 text-gray-900">
 
-  <main class="max-w-3xl mx-auto py-8 px-4">
-    <h1 class="text-3xl font-bold mb-6 text-center">📋 Complete Tasks & Earn</h1>
-    <div id="taskContainer" class="space-y-6">
+  <main class="max-w-3xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6 text-center">🎯 Your Tasks</h1>
+
+    <section class="mb-6 bg-white rounded shadow p-4">
+      <p class="mb-2 text-gray-600">Balance: <span id="userBalance" class="font-semibold text-green-600">৳0</span></p>
+    </section>
+
+    <section id="tasksContainer" class="space-y-4">
       <p>Loading tasks...</p>
-    </div>
+    </section>
   </main>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import {
-      getFirestore, collection, doc, getDocs, getDoc, setDoc, updateDoc
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import {
-      getAuth, onAuthStateChanged
+      getAuth,
+      onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import {
-      getStorage, ref, uploadBytes, getDownloadURL
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+      getFirestore,
+      collection,
+      getDocs,
+      doc,
+      getDoc,
+      updateDoc,
+      onSnapshot
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
@@ -33,98 +43,112 @@
       projectId: "bdwork-346d3",
       storageBucket: "bdwork-346d3.appspot.com",
       messagingSenderId: "900963179093",
-      appId: "1:900963179093:web:81e42d67bb31d603cc92dc"
+      appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
+      measurementId: "G-FM1YJ8E5GK"
     };
 
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
     const auth = getAuth(app);
-    const storage = getStorage(app);
+    const db = getFirestore(app);
 
-    const taskContainer = document.getElementById("taskContainer");
-
-    let currentUser = null;
+    let currentUserData = null;
+    let currentUserId = null;
+    const tasksContainer = document.getElementById("tasksContainer");
+    const userBalanceElem = document.getElementById("userBalance");
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        alert("Please log in.");
         window.location.href = "login.html";
         return;
       }
-
-      currentUser = user;
-      loadTasks();
+      currentUserId = user.uid;
+      await loadUserData();
+      loadTasksRealtime();
     });
 
-    async function loadTasks() {
-      const tasksSnapshot = await getDocs(collection(db, "tasks"));
-      const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-      const completedTasks = userDoc.exists() && userDoc.data().completedTasks ? userDoc.data().completedTasks : [];
+    async function loadUserData() {
+      const userDocRef = doc(db, "users", currentUserId);
+      const userSnap = await getDoc(userDocRef);
+      if (!userSnap.exists()) {
+        alert("User data not found.");
+        return;
+      }
+      currentUserData = userSnap.data();
+      userBalanceElem.innerText = `৳${(currentUserData.balance || 0).toFixed(2)}`;
+    }
 
-      taskContainer.innerHTML = "";
+    function loadTasksRealtime() {
+      const tasksCol = collection(db, "tasks");
 
-      tasksSnapshot.forEach((docSnap) => {
-        const task = { id: docSnap.id, ...docSnap.data() };
-        const isCompleted = completedTasks.includes(task.id);
+      onSnapshot(tasksCol, (snapshot) => {
+        if (snapshot.empty) {
+          tasksContainer.innerHTML = "<p>No tasks available right now.</p>";
+          return;
+        }
 
-        const taskDiv = document.createElement("div");
-        taskDiv.className = "bg-white rounded shadow p-4";
+        tasksContainer.innerHTML = "";
+        snapshot.forEach(docSnap => {
+          const task = { id: docSnap.id, ...docSnap.data() };
+          const done = currentUserData.tasksCompleted?.[task.id] === true;
 
-        taskDiv.innerHTML = `
-          <h2 class="text-xl font-bold">${task.name}</h2>
-          <p class="text-gray-700">${task.description || ""}</p>
-          <div class="mt-2">
-            <a href="https://example.com/${task.viewName}" target="_blank" class="text-blue-600 underline hover:text-blue-800">🔗 View</a>
-          </div>
-          <div class="mt-4">
-            <input type="file" accept="image/*" id="file-${task.id}" class="mb-2" ${isCompleted ? "disabled" : ""}>
-            <button ${isCompleted ? "disabled" : ""} class="submitBtn bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" data-task-id="${task.id}" data-reward="${task.reward}">${isCompleted ? "Submitted" : "Submit"}</button>
-          </div>
-        `;
+          const taskDiv = document.createElement("div");
+          taskDiv.className = "p-4 bg-white rounded shadow flex flex-col md:flex-row md:justify-between md:items-center gap-4";
 
-        taskContainer.appendChild(taskDiv);
-      });
+          taskDiv.innerHTML = `
+            <div>
+              <p class="font-semibold text-lg">${task.name}</p>
+              <p class="text-gray-600 mb-1">${task.description || ""}</p>
+              <p class="font-semibold text-indigo-600">Reward: ৳${task.reward.toFixed(2)}</p>
+              <a href="${task.viewName}" target="_blank" class="inline-block mt-2 text-sm text-blue-600 hover:underline">
+                <i class="fas fa-eye mr-1"></i>View
+              </a>
+            </div>
+          `;
 
-      document.querySelectorAll(".submitBtn").forEach(btn => {
-        btn.addEventListener("click", async (e) => {
-          const taskId = e.target.getAttribute("data-task-id");
-          const reward = parseFloat(e.target.getAttribute("data-reward"));
-          const fileInput = document.getElementById(`file-${taskId}`);
+          const btn = document.createElement("button");
+          btn.className = done
+            ? "bg-gray-400 text-white py-2 px-4 rounded cursor-not-allowed font-semibold"
+            : "bg-indigo-600 text-white py-2 px-4 rounded hover:bg-indigo-700 font-semibold transition";
+          btn.innerText = done ? "Completed ✓" : "Complete Task";
 
-          if (!fileInput.files.length) {
-            alert("Please upload a screenshot.");
-            return;
-          }
+          btn.disabled = done;
+          btn.onclick = () => completeTask(task);
 
-          const file = fileInput.files[0];
-          const storageRef = ref(storage, `submissions/${currentUser.uid}/${taskId}.jpg`);
-          await uploadBytes(storageRef, file);
-          const downloadURL = await getDownloadURL(storageRef);
-
-          const userRef = doc(db, "users", currentUser.uid);
-          const userSnap = await getDoc(userRef);
-
-          const currentData = userSnap.data();
-          const currentBalance = currentData.balance || 0;
-          const completed = currentData.completedTasks || [];
-
-          if (completed.includes(taskId)) {
-            alert("You already submitted this task.");
-            return;
-          }
-
-          completed.push(taskId);
-
-          await updateDoc(userRef, {
-            balance: currentBalance + reward,
-            completedTasks: completed
-          });
-
-          alert("Task submitted successfully! ৳" + reward + " added to your balance.");
-          loadTasks(); // reload to update UI
+          taskDiv.appendChild(btn);
+          tasksContainer.appendChild(taskDiv);
         });
       });
     }
+
+    async function completeTask(task) {
+      if (!currentUserData) return alert("User data not loaded.");
+
+      if (currentUserData.tasksCompleted?.[task.id]) {
+        return alert("Task already completed.");
+      }
+
+      try {
+        const userDocRef = doc(db, "users", currentUserId);
+
+        const newBalance = (currentUserData.balance || 0) + task.reward;
+        const updatedTasksCompleted = { ...(currentUserData.tasksCompleted || {}) };
+        updatedTasksCompleted[task.id] = true;
+
+        await updateDoc(userDocRef, {
+          balance: newBalance,
+          tasksCompleted: updatedTasksCompleted
+        });
+
+        currentUserData.balance = newBalance;
+        currentUserData.tasksCompleted = updatedTasksCompleted;
+        userBalanceElem.innerText = `৳${newBalance.toFixed(2)}`;
+
+        alert(`Task completed! You earned ৳${task.reward.toFixed(2)}.`);
+      } catch (err) {
+        alert("Error completing task: " + err.message);
+      }
+    }
   </script>
+
 </body>
 </html>
