@@ -1,296 +1,214 @@
 <!DOCTYPE html>
-<html lang="en" >
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin Task Management</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-    rel="stylesheet"
-  />
-</head>
-<body class="bg-gradient-to-br from-indigo-50 to-white min-h-screen text-gray-900">
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin Task Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  </head>
+  <body class="bg-gradient-to-br from-indigo-100 to-white min-h-screen text-gray-900">
+    <main class="max-w-6xl mx-auto px-4 py-10 sm:px-6 lg:px-8">
+      <h1 class="text-4xl sm:text-5xl font-extrabold mb-12 text-center text-indigo-700 drop-shadow-sm select-none">
+        🛠️ Admin Task Management
+      </h1>
 
-  <main class="max-w-5xl mx-auto p-6 sm:p-10">
-    <h1 class="text-4xl font-extrabold mb-10 text-center text-indigo-700 drop-shadow-sm select-none">
-      🛠️ Manage Tasks
-    </h1>
+      <section class="bg-white rounded-3xl shadow-xl p-8 mb-12 w-full max-w-3xl mx-auto">
+        <h2 class="text-2xl font-bold text-indigo-800 mb-6 border-b border-indigo-200 pb-2">Add / Edit Task</h2>
+        <form id="taskForm" class="space-y-6">
+          <input type="hidden" id="taskId" />
 
-    <section
-      class="mb-12 bg-white rounded-xl shadow-lg p-8 max-w-lg mx-auto sm:mx-0 sm:max-w-none"
-      aria-label="Add or edit a task"
-    >
-      <h2 class="text-2xl font-semibold mb-6 text-indigo-800 border-b border-indigo-200 pb-2">
-        Add / Edit Task
-      </h2>
+          <div>
+            <label for="taskName" class="block text-sm font-medium text-indigo-700 mb-2">Task Name <span class="text-red-500">*</span></label>
+            <input type="text" id="taskName" required placeholder="Enter task name"
+              class="w-full px-4 py-3 border border-indigo-300 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder-indigo-300" />
+          </div>
 
-      <form id="taskForm" class="space-y-6">
-        <input type="hidden" id="taskId" value="" />
+          <div>
+            <label for="taskDesc" class="block text-sm font-medium text-indigo-700 mb-2">Description</label>
+            <textarea id="taskDesc" rows="4" placeholder="Enter task description (optional)"
+              class="w-full px-4 py-3 border border-indigo-300 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-none placeholder-indigo-300"></textarea>
+          </div>
 
-        <div>
-          <label
-            for="taskName"
-            class="block mb-2 font-medium text-indigo-700"
-            >Task Name <span class="text-red-500">*</span></label
-          >
-          <input
-            type="text"
-            id="taskName"
-            placeholder="Enter task name"
-            class="w-full border border-indigo-300 rounded-lg px-4 py-3 text-gray-900 placeholder-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-            required
-          />
-        </div>
+          <div>
+            <label for="taskReward" class="block text-sm font-medium text-indigo-700 mb-2">Reward Amount (৳) <span class="text-red-500">*</span></label>
+            <input type="number" id="taskReward" required placeholder="Enter reward amount (e.g. 5)" min="0" step="0.01"
+              class="w-full px-4 py-3 border border-indigo-300 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder-indigo-300" />
+          </div>
 
-        <div>
-          <label
-            for="taskDesc"
-            class="block mb-2 font-medium text-indigo-700"
-            >Description</label
-          >
-          <textarea
-            id="taskDesc"
-            placeholder="Enter task description (optional)"
-            class="w-full border border-indigo-300 rounded-lg px-4 py-3 text-gray-900 placeholder-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition resize-none"
-            rows="4"
-          ></textarea>
-        </div>
+          <div>
+            <label for="taskView" class="block text-sm font-medium text-indigo-700 mb-2">View Name (URL)</label>
+            <input type="url" id="taskView" placeholder="Enter view link (e.g. https://example.com)"
+              class="w-full px-4 py-3 border border-indigo-300 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder-indigo-300" />
+          </div>
 
-        <div>
-          <label
-            for="taskReward"
-            class="block mb-2 font-medium text-indigo-700"
-            >Reward Amount (৳) <span class="text-red-500">*</span></label
-          >
-          <input
-            type="number"
-            id="taskReward"
-            placeholder="Enter reward amount (e.g. 5)"
-            class="w-full border border-indigo-300 rounded-lg px-4 py-3 text-gray-900 placeholder-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-            min="0"
-            step="0.01"
-            required
-          />
-        </div>
+          <div class="flex flex-col sm:flex-row justify-center gap-4 pt-2">
+            <button type="submit"
+              class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-3 rounded-2xl shadow-md transition focus:outline-none focus:ring-4 focus:ring-indigo-400">
+              Save Task
+            </button>
+            <button type="button" id="resetBtn"
+              class="w-full sm:w-auto bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-8 py-3 rounded-2xl shadow-md transition focus:outline-none focus:ring-4 focus:ring-gray-400">
+              Reset
+            </button>
+          </div>
+        </form>
+      </section>
 
-        <div>
-          <label
-            for="taskView"
-            class="block mb-2 font-medium text-indigo-700"
-            >View Name (URL)</label
-          >
-          <input
-            type="url"
-            id="taskView"
-            placeholder="Enter view link (e.g. https://example.com)"
-            class="w-full border border-indigo-300 rounded-lg px-4 py-3 text-gray-900 placeholder-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-          />
-        </div>
+      <section>
+        <h2 class="text-2xl font-bold text-indigo-800 mb-6 border-b border-indigo-200 pb-2 text-center">All Tasks</h2>
+        <div id="tasksList" class="space-y-6 max-w-5xl mx-auto" role="list" aria-live="polite">
+          <p class="text-center text-indigo-500 italic">Loading tasks...</p>
+        </div>
+      </section>
+    </main>
 
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <button
-            type="submit"
-            class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-3 rounded-lg shadow-md transition focus:outline-none focus:ring-4 focus:ring-indigo-400"
-          >
-            Save Task
-          </button>
-          <button
-            type="button"
-            id="resetBtn"
-            class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-8 py-3 rounded-lg shadow-md transition focus:outline-none focus:ring-4 focus:ring-gray-400"
-          >
-            Reset
-          </button>
-        </div>
-      </form>
-    </section>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+      import {
+        getFirestore,
+        collection,
+        getDocs,
+        doc,
+        setDoc,
+        deleteDoc,
+        onSnapshot,
+      } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+      import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-    <section aria-label="List of all tasks">
-      <h2
-        class="text-2xl font-semibold mb-6 text-indigo-800 border-b border-indigo-200 pb-2 max-w-2xl mx-auto"
-      >
-        All Tasks
-      </h2>
-      <div
-        id="tasksList"
-        class="space-y-5 max-w-4xl mx-auto"
-        role="list"
-        aria-live="polite"
-      >
-        <p class="text-center text-indigo-400 italic">Loading tasks...</p>
-      </div>
-    </section>
-  </main>
+      const firebaseConfig = {
+        apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
+        authDomain: "bdwork-346d3.firebaseapp.com",
+        projectId: "bdwork-346d3",
+        storageBucket: "bdwork-346d3.appspot.com",
+        messagingSenderId: "900963179093",
+        appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
+        measurementId: "G-FM1YJ8E5GK",
+      };
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import {
-      getFirestore,
-      collection,
-      getDocs,
-      doc,
-      setDoc,
-      deleteDoc,
-      onSnapshot,
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const auth = getAuth(app);
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
-      authDomain: "bdwork-346d3.firebaseapp.com",
-      projectId: "bdwork-346d3",
-      storageBucket: "bdwork-346d3.appspot.com",
-      messagingSenderId: "900963179093",
-      appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
-      measurementId: "G-FM1YJ8E5GK",
-    };
+      const tasksCol = collection(db, "tasks");
+      const tasksList = document.getElementById("tasksList");
+      const taskForm = document.getElementById("taskForm");
+      const taskIdInput = document.getElementById("taskId");
+      const taskNameInput = document.getElementById("taskName");
+      const taskDescInput = document.getElementById("taskDesc");
+      const taskRewardInput = document.getElementById("taskReward");
+      const taskViewInput = document.getElementById("taskView");
+      const resetBtn = document.getElementById("resetBtn");
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
+      onAuthStateChanged(auth, (user) => {
+        if (!user) {
+          alert("Please log in first.");
+          window.location.href = "login.html";
+          return;
+        }
+        loadTasksRealtime();
+      });
 
-    const tasksCol = collection(db, "tasks");
-    const tasksList = document.getElementById("tasksList");
-    const taskForm = document.getElementById("taskForm");
-    const taskIdInput = document.getElementById("taskId");
-    const taskNameInput = document.getElementById("taskName");
-    const taskDescInput = document.getElementById("taskDesc");
-    const taskRewardInput = document.getElementById("taskReward");
-    const taskViewInput = document.getElementById("taskView");
-    const resetBtn = document.getElementById("resetBtn");
+      function loadTasksRealtime() {
+        onSnapshot(tasksCol, (snapshot) => {
+          if (snapshot.empty) {
+            tasksList.innerHTML = '<p class="text-center text-indigo-500 italic">No tasks found.</p>';
+            return;
+          }
 
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        alert("Please log in first.");
-        window.location.href = "login.html";
-        return;
-      }
-      loadTasksRealtime();
-    });
+          tasksList.innerHTML = "";
+          snapshot.forEach((docSnap) => {
+            const task = { id: docSnap.id, ...docSnap.data() };
 
-    function loadTasksRealtime() {
-      onSnapshot(tasksCol, (snapshot) => {
-        if (snapshot.empty) {
-          tasksList.innerHTML =
-            '<p class="text-center text-indigo-500 italic">No tasks found.</p>';
-          return;
-        }
+            const taskDiv = document.createElement("div");
+            taskDiv.className = "p-6 bg-white rounded-2xl shadow-lg flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4";
 
-        tasksList.innerHTML = "";
-        snapshot.forEach((docSnap) => {
-          const task = { id: docSnap.id, ...docSnap.data() };
-          const taskDiv = document.createElement("div");
-          taskDiv.className =
-            "p-5 bg-white rounded-xl shadow-md flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-0";
+            const info = document.createElement("div");
+            info.className = "flex-1 min-w-0";
+            info.innerHTML = `
+              <p class="text-lg font-semibold text-indigo-700 truncate">${task.name}</p>
+              <p class="text-sm text-gray-600 mt-1 line-clamp-2">${task.description || ""}</p>
+              <p class="mt-2 font-medium text-indigo-600">Reward: ৳${task.reward?.toFixed(2) || "0.00"}</p>
+              ${task.view ? `<p class="mt-1"><a href="${task.view}" target="_blank" class="text-blue-600 underline hover:text-blue-800">View</a></p>` : ""}
+            `;
 
-          const info = document.createElement("div");
-          info.className = "flex-1 min-w-0";
+            const controls = document.createElement("div");
+            controls.className = "flex gap-2 sm:gap-3";
 
-          info.innerHTML = `
-            <p class="font-semibold text-lg text-indigo-700 truncate">${task.name}</p>
-            <p class="text-gray-600 text-sm mt-1 line-clamp-2">${task.description || ""}</p>
-            <p class="mt-2 font-semibold text-indigo-600">Reward: ৳${task.reward?.toFixed(2) || "0.00"}</p>
-            ${
-              task.view
-                ? `<p class="mt-1"><a href="${task.view}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline hover:text-blue-800">View</a></p>`
-                : ""
-            }
-          `;
+            const editBtn = document.createElement("button");
+            editBtn.className = "bg-yellow-400 hover:bg-yellow-500 px-4 py-2 rounded-xl text-white transition shadow-md focus:outline-none focus:ring-2 focus:ring-yellow-300";
+            editBtn.innerHTML = `<i class="fas fa-edit"></i> Edit`;
+            editBtn.title = "Edit Task";
+            editBtn.onclick = () => {
+              taskIdInput.value = task.id;
+              taskNameInput.value = task.name;
+              taskDescInput.value = task.description || "";
+              taskRewardInput.value = task.reward;
+              taskViewInput.value = task.view || "";
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            };
 
-          const controls = document.createElement("div");
-          controls.className = "flex gap-3 justify-end";
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "bg-red-600 hover:bg-red-700 px-4 py-2 rounded-xl text-white transition shadow-md focus:outline-none focus:ring-2 focus:ring-red-400";
+            deleteBtn.innerHTML = `<i class="fas fa-trash"></i> Delete`;
+            deleteBtn.title = "Delete Task";
+            deleteBtn.onclick = async () => {
+              if (confirm(`Delete task "${task.name}"? This action cannot be undone.`)) {
+                try {
+                  await deleteDoc(doc(db, "tasks", task.id));
+                  alert("Task deleted.");
+                } catch (error) {
+                  alert("Error deleting task: " + error.message);
+                }
+              }
+            };
 
-          const editBtn = document.createElement("button");
-          editBtn.className =
-            "bg-yellow-400 hover:bg-yellow-500 px-4 py-2 rounded-lg text-white transition shadow-md focus:outline-none focus:ring-2 focus:ring-yellow-300";
-          editBtn.innerHTML = `<i class="fas fa-edit"></i> Edit`;
-          editBtn.title = "Edit Task";
-          editBtn.onclick = () => {
-            taskIdInput.value = task.id;
-            taskNameInput.value = task.name;
-            taskDescInput.value = task.description || "";
-            taskRewardInput.value = task.reward;
-            taskViewInput.value = task.view || "";
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          };
+            controls.appendChild(editBtn);
+            controls.appendChild(deleteBtn);
 
-          const deleteBtn = document.createElement("button");
-          deleteBtn.className =
-            "bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-white transition shadow-md focus:outline-none focus:ring-2 focus:ring-red-400";
-          deleteBtn.innerHTML = `<i class="fas fa-trash"></i> Delete`;
-          deleteBtn.title = "Delete Task";
-          deleteBtn.onclick = async () => {
-            if (
-              confirm(
-                `Delete task "${task.name}"? This action cannot be undone.`
-              )
-            ) {
-              try {
-                await deleteDoc(doc(db, "tasks", task.id));
-                alert("Task deleted.");
-              } catch (error) {
-                alert("Error deleting task: " + error.message);
-              }
-            }
-          };
+            taskDiv.appendChild(info);
+            taskDiv.appendChild(controls);
+            tasksList.appendChild(taskDiv);
+          });
+        });
+      }
 
-          controls.appendChild(editBtn);
-          controls.appendChild(deleteBtn);
+      function resetForm() {
+        taskIdInput.value = "";
+        taskNameInput.value = "";
+        taskDescInput.value = "";
+        taskRewardInput.value = "";
+        taskViewInput.value = "";
+        taskNameInput.focus();
+      }
 
-          taskDiv.appendChild(info);
-          taskDiv.appendChild(controls);
-          tasksList.appendChild(taskDiv);
-        });
-      });
-    }
+      resetBtn.addEventListener("click", resetForm);
 
-    function resetForm() {
-      taskIdInput.value = "";
-      taskNameInput.value = "";
-      taskDescInput.value = "";
-      taskRewardInput.value = "";
-      taskViewInput.value = "";
-      taskNameInput.focus();
-    }
+      taskForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-    resetBtn.addEventListener("click", resetForm);
+        const id = taskIdInput.value.trim();
+        const name = taskNameInput.value.trim();
+        const description = taskDescInput.value.trim();
+        const reward = parseFloat(taskRewardInput.value);
+        const view = taskViewInput.value.trim();
 
-    taskForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
+        if (!name) return alert("Task name is required.");
+        if (isNaN(reward) || reward < 0) return alert("Reward must be a valid non-negative number.");
 
-      const id = taskIdInput.value.trim();
-      const name = taskNameInput.value.trim();
-      const description = taskDescInput.value.trim();
-      const reward = parseFloat(taskRewardInput.value);
-      const view = taskViewInput.value.trim();
-
-      if (!name) return alert("Task name is required.");
-      if (isNaN(reward) || reward < 0)
-        return alert("Reward must be a valid non-negative number.");
-
-      try {
-        if (id) {
-          await setDoc(
-            doc(db, "tasks", id),
-            { name, description, reward, view },
-            { merge: true }
-          );
-          alert("Task updated.");
-        } else {
-          await setDoc(doc(collection(db, "tasks")), {
-            name,
-            description,
-            reward,
-            view,
-          });
-          alert("Task added.");
-        }
-        resetForm();
-      } catch (error) {
-        alert("Error saving task: " + error.message);
-      }
-    });
-  </script>
-</body>
-  </html>
+        try {
+          if (id) {
+            await setDoc(doc(db, "tasks", id), { name, description, reward, view }, { merge: true });
+            alert("Task updated.");
+          } else {
+            await setDoc(doc(collection(db, "tasks")), { name, description, reward, view });
+            alert("Task added.");
+          }
+          resetForm();
+        } catch (error) {
+          alert("Error saving task: " + error.message);
+        }
+      });
+    </script>
+  </body>
+</html>
