@@ -28,8 +28,8 @@
 
         <p class="text-sm text-gray-500 mt-6 mb-2">Your Refer Code</p>
         <div class="flex items-center gap-3">
-          <p id="userReferCode" class="text-lg font-mono font-semibold text-blue-800 bg-blue-50 px-2 py-1 rounded">...</p>
-          <button onclick="copyReferCode()" class="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 text-sm transition">
+          <input id="userReferCode" readonly class="text-lg font-mono font-semibold text-blue-800 bg-blue-50 px-3 py-2 rounded w-full border border-blue-200" />
+          <button onclick="copyReferCode()" class="bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 text-sm transition">
             Copy
           </button>
         </div>
@@ -109,7 +109,7 @@
           currentUserData = { uid: user.uid, ...data };
           document.getElementById("userEmail").innerText = data.email;
           document.getElementById("userBalance").innerText = `৳${data.balance || 0}`;
-          document.getElementById("userReferCode").innerText = user.uid;
+          document.getElementById("userReferCode").value = user.uid;
 
           const referQuery = query(collection(db, "users"), where("referredBy", "==", user.uid));
           const referSnapshot = await getDocs(referQuery);
@@ -159,8 +159,10 @@
     };
 
     window.copyReferCode = function () {
-      const code = document.getElementById("userReferCode").innerText;
-      navigator.clipboard.writeText(code).then(() => alert("Refer code copied!"));
+      const input = document.getElementById("userReferCode");
+      input.select();
+      input.setSelectionRange(0, 99999); // For mobile
+      navigator.clipboard.writeText(input.value).then(() => alert("Refer code copied!"));
     };
   </script>
 </body>
