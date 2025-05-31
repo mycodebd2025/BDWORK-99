@@ -1,36 +1,57 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" >
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>User Tasks</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    rel="stylesheet"
+  />
 </head>
-<body class="bg-gray-100 text-gray-900">
+<body class="bg-gradient-to-r from-indigo-50 to-white text-gray-900 min-h-screen flex flex-col">
 
-  <main class="max-w-4xl mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-6 text-center">📝 Available Tasks</h1>
+  <main class="max-w-4xl mx-auto p-6 flex-grow">
+    <h1
+      class="text-3xl sm:text-4xl font-extrabold mb-8 text-center text-indigo-700 drop-shadow-sm"
+    >
+      📝 Available Tasks
+    </h1>
 
-    <section class="mb-6 p-4 bg-white rounded shadow text-center">
-      <p class="text-lg font-semibold">Your Balance: ৳<span id="userBalance">0.00</span></p>
+    <section
+      class="mb-8 p-6 bg-indigo-100 rounded-xl shadow-md text-center max-w-sm mx-auto"
+    >
+      <p class="text-lg sm:text-xl font-semibold text-indigo-900">
+        Your Balance: <span class="text-indigo-700">৳</span
+        ><span id="userBalance" class="text-indigo-800">0.00</span>
+      </p>
     </section>
 
     <section>
-      <div id="tasksList" class="space-y-4">
-        <p>Loading tasks...</p>
+      <div
+        id="tasksList"
+        class="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+      >
+        <p class="col-span-full text-center text-gray-500">Loading tasks...</p>
       </div>
     </section>
   </main>
 
+  <footer class="bg-indigo-700 text-indigo-50 text-center py-4 mt-auto shadow-inner">
+    <p class="text-sm">&copy; 2025 BDWork. All rights reserved.</p>
+  </footer>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import {
-      getFirestore, collection, onSnapshot, doc, getDoc
+      getFirestore,
+      collection,
+      onSnapshot,
+      doc,
+      getDoc,
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import {
-      getAuth, onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
@@ -39,7 +60,7 @@
       storageBucket: "bdwork-346d3.appspot.com",
       messagingSenderId: "900963179093",
       appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
-      measurementId: "G-FM1YJ8E5GK"
+      measurementId: "G-FM1YJ8E5GK",
     };
 
     const app = initializeApp(firebaseConfig);
@@ -77,26 +98,32 @@
 
       onSnapshot(tasksCol, (snapshot) => {
         if (snapshot.empty) {
-          tasksList.innerHTML = "<p>No tasks available right now.</p>";
+          tasksList.innerHTML = "<p class='col-span-full text-center text-gray-500'>No tasks available right now.</p>";
           return;
         }
 
         tasksList.innerHTML = "";
-        snapshot.forEach(docSnap => {
+        snapshot.forEach((docSnap) => {
           const task = { id: docSnap.id, ...docSnap.data() };
 
           const taskDiv = document.createElement("div");
-          taskDiv.className = "p-4 bg-white rounded shadow";
+          taskDiv.className =
+            "p-5 bg-white rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between";
 
           let taskHtml = `
-            <p class="font-semibold text-xl">${task.name}</p>
-            <p class="text-gray-700 mt-1">${task.description || ""}</p>
-            <p class="mt-2 font-semibold text-indigo-600">Reward: ৳${task.reward?.toFixed(2) || '0.00'}</p>
+            <div>
+              <p class="font-semibold text-lg sm:text-xl text-indigo-700">${task.name}</p>
+              <p class="text-gray-600 mt-2 min-h-[3rem]">${task.description || ""}</p>
+            </div>
+            <div class="mt-4 flex flex-col gap-2">
+              <p class="font-semibold text-indigo-600 text-lg">Reward: ৳${task.reward?.toFixed(2) || "0.00"}</p>
           `;
 
           if (task.view) {
-            taskHtml += `<p class="mt-1"><a href="${task.view}" target="_blank" class="text-blue-600 underline">View Task Details</a></p>`;
+            taskHtml += `<a href="${task.view}" target="_blank" rel="noopener" class="text-indigo-500 hover:text-indigo-700 underline text-sm sm:text-base">View Task Details <i class="fa-solid fa-arrow-up-right-from-square ml-1"></i></a>`;
           }
+
+          taskHtml += "</div>";
 
           taskDiv.innerHTML = taskHtml;
           tasksList.appendChild(taskDiv);
