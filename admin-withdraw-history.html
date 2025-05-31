@@ -26,17 +26,19 @@
       <h2 class="text-2xl font-semibold mb-6">All Withdraw Requests</h2>
 
       <div class="overflow-x-auto border rounded shadow bg-white max-h-[600px]">
-        <table class="w-full min-w-[600px] border-collapse border border-gray-300">
+        <table class="w-full min-w-[900px] border-collapse border border-gray-300">
           <thead class="bg-gray-200 sticky top-0 z-10">
             <tr>
               <th class="p-3 border border-gray-300 text-left">User Email</th>
               <th class="p-3 border border-gray-300 text-left">Amount (৳)</th>
+              <th class="p-3 border border-gray-300 text-left">Method</th>
+              <th class="p-3 border border-gray-300 text-left">Address</th>
               <th class="p-3 border border-gray-300 text-left">Date & Time</th>
               <th class="p-3 border border-gray-300 text-left">Status</th>
             </tr>
           </thead>
           <tbody id="withdrawHistoryBody">
-            <tr><td colspan="4" class="p-4 text-center text-gray-500">Loading withdraw history...</td></tr>
+            <tr><td colspan="6" class="p-4 text-center text-gray-500">Loading withdraw history...</td></tr>
           </tbody>
         </table>
       </div>
@@ -77,7 +79,7 @@
     const backBtn = document.getElementById("backBtn");
 
     backBtn.addEventListener("click", () => {
-      window.location.href = "admin.html"; // Adjust if your admin panel filename is different
+      window.location.href = "admin.html";
     });
 
     onAuthStateChanged(auth, user => {
@@ -89,14 +91,14 @@
     });
 
     async function loadWithdrawHistory() {
-      withdrawHistoryBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">Loading withdraw history...</td></tr>`;
+      withdrawHistoryBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-500">Loading withdraw history...</td></tr>`;
       try {
         const withdrawsCol = collection(db, "withdraws");
         const q = query(withdrawsCol, orderBy("timestamp", "desc"));
         const withdrawsSnapshot = await getDocs(q);
 
         if (withdrawsSnapshot.empty) {
-          withdrawHistoryBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">No withdraw history found.</td></tr>`;
+          withdrawHistoryBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center">No withdraw history found.</td></tr>`;
           return;
         }
 
@@ -113,6 +115,8 @@
             <tr class="border-t border-gray-200 hover:bg-gray-50">
               <td class="p-3 border border-gray-300">${wd.userEmail || "N/A"}</td>
               <td class="p-3 border border-gray-300">৳${wd.amount || 0}</td>
+              <td class="p-3 border border-gray-300">${wd.method || "N/A"}</td>
+              <td class="p-3 border border-gray-300">${wd.address || "N/A"}</td>
               <td class="p-3 border border-gray-300">${dateStr}</td>
               <td class="p-3 border border-gray-300 text-${statusColor}-600 font-semibold capitalize">${wd.status || "unknown"}</td>
             </tr>
@@ -122,7 +126,7 @@
         withdrawHistoryBody.innerHTML = rowsHtml;
 
       } catch (err) {
-        withdrawHistoryBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-600">Error loading withdraw history: ${err.message}</td></tr>`;
+        withdrawHistoryBody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-600">Error loading withdraw history: ${err.message}</td></tr>`;
         console.error(err);
       }
     }
