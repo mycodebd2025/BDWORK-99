@@ -13,8 +13,8 @@
 
   <header class="bg-blue-600 text-white p-4 flex justify-between items-center">
     <h1 class="text-xl font-bold">Admin Panel - Withdraw Requests</h1>
-    <button id="logoutBtn" class="bg-red-600 px-4 py-2 rounded hover:bg-red-700 flex items-center">
-      <i class="fas fa-sign-out-alt mr-2"></i> Logout
+    <button id="backBtn" class="bg-gray-700 px-4 py-2 rounded hover:bg-gray-800 flex items-center">
+      <i class="fas fa-arrow-left mr-2"></i> Back
     </button>
   </header>
 
@@ -48,7 +48,7 @@
     import {
       getAuth,
       onAuthStateChanged,
-      signOut,
+      // signOut, -- no longer needed
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import {
       getFirestore,
@@ -77,11 +77,10 @@
     const db = getFirestore(app);
 
     const withdrawRequestsBody = document.getElementById("withdrawRequestsBody");
-    const logoutBtn = document.getElementById("logoutBtn");
+    const backBtn = document.getElementById("backBtn");
 
-    logoutBtn.addEventListener("click", async () => {
-      await signOut(auth);
-      window.location.href = "login.html";
+    backBtn.addEventListener("click", () => {
+      window.location.href = "admin.html";
     });
 
     async function loadWithdrawRequests() {
