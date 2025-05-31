@@ -63,7 +63,7 @@
     let currentUser = null;
     let userData = null;
 
-    // Helper: Swal Toast
+    // Swal toast config
     const toast = Swal.mixin({
       toast: true,
       position: 'top-end',
@@ -135,7 +135,6 @@
           if (completed) {
             taskHtml += `<p class="mt-3 px-4 py-2 bg-green-600 text-white rounded select-none text-center font-semibold">✔ Completed</p>`;
           } else {
-            // Two file inputs for screenshots + button
             taskHtml += `
               <div class="mt-4 space-y-3">
                 <label class="block">
@@ -170,38 +169,31 @@
               });
             });
 
-            btn.addEventListener("click", () => completeTaskWithScreenshots(task, filesSelected, inputs, btn));
+            btn.addEventListener("click", () => completeTask(task, filesSelected));
           }
         });
       });
     }
 
-    async function completeTaskWithScreenshots(task, filesSelected, inputs, btn) {
+    async function completeTask(task, filesSelected) {
       if (!currentUser) {
         toast.fire({ icon: 'error', title: "User not logged in" });
         return;
       }
 
-      // Basic validation (already checked enabled button but re-check)
       if (!(filesSelected[1] && filesSelected[2])) {
-        toast.fire({ icon: 'warning', title: "Please upload both screenshots before completing the task." });
+        toast.fire({
+          icon: 'warning',
+          title: 'Please upload screenshots.'
+        });
         return;
       }
 
-      btn.disabled = true;
-      btn.textContent = "Uploading...";
-
-      // TODO: Implement actual upload logic to Firebase Storage or elsewhere
-      // For now, simulate upload delay:
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // After "upload", update Firestore user doc
+      // No actual upload, just simulate success
       const userRef = doc(db, "users", currentUser.uid);
       const userSnap = await getDoc(userRef);
       if (!userSnap.exists()) {
         toast.fire({ icon: 'error', title: "User not found" });
-        btn.disabled = false;
-        btn.textContent = "Complete Task";
         return;
       }
 
@@ -209,8 +201,6 @@
 
       if (data.completedTasks?.includes(task.id)) {
         toast.fire({ icon: 'info', title: "You already completed this task." });
-        btn.disabled = false;
-        btn.textContent = "Complete Task";
         return;
       }
 
@@ -231,11 +221,7 @@
         title: `Task "${task.name}" completed! You earned ৳${(task.reward || 0).toFixed(2)}`
       });
 
-      // Reset inputs and reload tasks to update UI
-      inputs.forEach(i => i.value = "");
-      btn.textContent = "Complete Task";
-      btn.disabled = true;
-
+      // Reload tasks to update UI
       loadTasks();
     }
   </script>
