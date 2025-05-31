@@ -181,15 +181,16 @@
         return;
       }
 
+      // Check if both screenshots are uploaded
       if (!(filesSelected[1] && filesSelected[2])) {
         toast.fire({
           icon: 'warning',
-          title: 'Please upload screenshots.'
+          title: 'Please upload both screenshots before completing the task.'
         });
         return;
       }
 
-      // No actual upload, just simulate success
+      // Simulate success (no actual upload)
       const userRef = doc(db, "users", currentUser.uid);
       const userSnap = await getDoc(userRef);
       if (!userSnap.exists()) {
