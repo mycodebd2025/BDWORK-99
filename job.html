@@ -63,7 +63,7 @@
     let currentUser = null;
     let userData = null;
 
-    // Swal toast config
+    // SweetAlert2 toast config
     const toast = Swal.mixin({
       toast: true,
       position: 'top-end',
@@ -160,7 +160,7 @@
 
             const filesSelected = { 1: null, 2: null };
 
-            // Enable button only if both files are selected
+            // Enable button only if both screenshots are selected
             inputs.forEach(input => {
               input.addEventListener("change", () => {
                 const num = input.getAttribute("data-screenshot");
@@ -181,16 +181,18 @@
         return;
       }
 
-      // Check if both screenshots are uploaded
+      // Show warning if screenshots not uploaded
       if (!(filesSelected[1] && filesSelected[2])) {
-        toast.fire({
+        Swal.fire({
           icon: 'warning',
-          title: 'Please upload both screenshots before completing the task.'
+          title: 'Warning',
+          text: 'Please upload both screenshots before completing the task.',
+          confirmButtonColor: '#6366f1'
         });
         return;
       }
 
-      // Simulate success (no actual upload)
+      // Simulate task completion
       const userRef = doc(db, "users", currentUser.uid);
       const userSnap = await getDoc(userRef);
       if (!userSnap.exists()) {
@@ -227,4 +229,4 @@
     }
   </script>
 </body>
-</html>
+</html
