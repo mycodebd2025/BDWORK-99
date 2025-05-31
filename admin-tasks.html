@@ -25,7 +25,7 @@
         Add / Edit Task
       </h2>
 
-      <form id="taskForm" class="space-y-6">
+      <form id="taskForm" class="space-y-6" enctype="multipart/form-data">
         <input type="hidden" id="taskId" value="" />
 
         <div>
@@ -88,6 +88,21 @@
           />
         </div>
 
+        <!-- NEW: Screenshot upload input -->
+        <div>
+          <label
+            for="taskScreenshot"
+            class="block mb-2 font-medium text-indigo-700"
+            >Upload Screenshot (optional)</label
+          >
+          <input
+            type="file"
+            id="taskScreenshot"
+            accept="image/*"
+            class="w-full border border-indigo-300 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+          />
+        </div>
+
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
           <button
             type="submit"
@@ -128,13 +143,21 @@
     import {
       getFirestore,
       collection,
-      getDocs,
       doc,
       setDoc,
       deleteDoc,
       onSnapshot,
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import {
+      getStorage,
+      ref as storageRef,
+      uploadBytes,
+      getDownloadURL,
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
@@ -149,6 +172,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
+    const storage = getStorage(app);
 
     const tasksCol = collection(db, "tasks");
     const tasksList = document.getElementById("tasksList");
@@ -158,6 +182,7 @@
     const taskDescInput = document.getElementById("taskDesc");
     const taskRewardInput = document.getElementById("taskReward");
     const taskViewInput = document.getElementById("taskView");
+    const taskScreenshotInput = document.getElementById("taskScreenshot");
     const resetBtn = document.getElementById("resetBtn");
 
     onAuthStateChanged(auth, (user) => {
@@ -196,6 +221,11 @@
                 ? `<p class="mt-1"><a href="${task.view}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline hover:text-blue-800">View</a></p>`
                 : ""
             }
+            ${
+              task.screenshotUrl
+                ? `<p class="mt-2"><img src="${task.screenshotUrl}" alt="Screenshot for ${task.name}" class="max-w-xs rounded-md shadow-md" /></p>`
+                : ""
+            }
           `;
 
           const controls = document.createElement("div");
@@ -212,6 +242,7 @@
             taskDescInput.value = task.description || "";
             taskRewardInput.value = task.reward;
             taskViewInput.value = task.view || "";
+            taskScreenshotInput.value = ""; // file input reset
             window.scrollTo({ top: 0, behavior: "smooth" });
           };
 
@@ -221,40 +252,17 @@
           deleteBtn.innerHTML = `<i class="fas fa-trash"></i> Delete`;
           deleteBtn.title = "Delete Task";
           deleteBtn.onclick = async () => {
-            if (
-              confirm(
-                `Delete task "${task.name}"? This action cannot be undone.`
-              )
-            ) {
-              try {
-                await deleteDoc(doc(db, "tasks", task.id));
-                alert("Task deleted.");
-              } catch (error) {
-                alert("Error deleting task: " + error.message);
-              }
+            if (confirm(`Delete task "${task.name}"?`)) {
+              await deleteDoc(doc(tasksCol, task.id));
             }
           };
 
-          controls.appendChild(editBtn);
-          controls.appendChild(deleteBtn);
-
-          taskDiv.appendChild(info);
-          taskDiv.appendChild(controls);
+          controls.append(editBtn, deleteBtn);
+          taskDiv.append(info, controls);
           tasksList.appendChild(taskDiv);
         });
       });
     }
-
-    function resetForm() {
-      taskIdInput.value = "";
-      taskNameInput.value = "";
-      taskDescInput.value = "";
-      taskRewardInput.value = "";
-      taskViewInput.value = "";
-      taskNameInput.focus();
-    }
-
-    resetBtn.addEventListener("click", resetForm);
 
     taskForm.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -264,32 +272,53 @@
       const description = taskDescInput.value.trim();
       const reward = parseFloat(taskRewardInput.value);
       const view = taskViewInput.value.trim();
+      const file = taskScreenshotInput.files[0];
 
-      if (!name) return alert("Task name is required.");
-      if (isNaN(reward) || reward < 0)
-        return alert("Reward must be a valid non-negative number.");
+      if (!name || isNaN(reward) || reward < 0) {
+        alert("Please provide valid task name and reward.");
+        return;
+      }
+
+      let screenshotUrl = null;
+      if (file) {
+        const storageReference = storageRef(storage, `taskScreenshots/${Date.now()}_${file.name}`);
+        try {
+          await uploadBytes(storageReference, file);
+          screenshotUrl = await getDownloadURL(storageReference);
+        } catch (error) {
+          alert("Failed to upload screenshot: " + error.message);
+          return;
+        }
+      }
+
+      const taskData = {
+        name,
+        description: description || null,
+        reward,
+        view: view || null,
+        ...(screenshotUrl && { screenshotUrl }),
+      };
 
       try {
         if (id) {
-          await setDoc(
-            doc(db, "tasks", id),
-            { name, description, reward, view },
-            { merge: true }
-          );
-          alert("Task updated.");
+          // Update existing task
+          await setDoc(doc(tasksCol, id), taskData, { merge: true });
         } else {
-          await setDoc(doc(collection(db, "tasks")), {
-            name,
-            description,
-            reward,
-            view,
-          });
-          alert("Task added.");
+          // Add new task, generate id automatically
+          const newDocRef = doc(tasksCol);
+          await setDoc(newDocRef, taskData);
         }
-        resetForm();
+        alert("Task saved successfully!");
+        taskForm.reset();
+        taskIdInput.value = "";
       } catch (error) {
         alert("Error saving task: " + error.message);
       }
+    });
+
+    resetBtn.addEventListener("click", () => {
+      taskForm.reset();
+      taskIdInput.value = "";
     });
   </script>
 </body>
