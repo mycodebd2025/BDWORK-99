@@ -6,6 +6,8 @@
   <title>User Tasks</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <!-- SweetAlert2 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.12/dist/sweetalert2.min.css" rel="stylesheet" />
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
 
@@ -28,6 +30,9 @@
   <footer class="bg-white text-center py-4 text-gray-500 select-none">
     &copy; 2025 Your Company
   </footer>
+
+  <!-- SweetAlert2 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.12/dist/sweetalert2.all.min.js"></script>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -58,10 +63,28 @@
     let currentUser = null;
     let userData = null;
 
+    // Helper: Swal Toast
+    const toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+      didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer)
+        toast.addEventListener('mouseleave', Swal.resumeTimer)
+      }
+    });
+
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        alert("Please log in to view tasks.");
-        window.location.href = "login.html";
+        toast.fire({
+          icon: 'warning',
+          title: 'Please log in to view tasks.'
+        });
+        setTimeout(() => {
+          window.location.href = "login.html";
+        }, 1500);
         return;
       }
       currentUser = user;
@@ -154,11 +177,14 @@
     }
 
     async function completeTaskWithScreenshots(task, filesSelected, inputs, btn) {
-      if (!currentUser) return alert("User not logged in");
+      if (!currentUser) {
+        toast.fire({ icon: 'error', title: "User not logged in" });
+        return;
+      }
 
       // Basic validation (already checked enabled button but re-check)
       if (!(filesSelected[1] && filesSelected[2])) {
-        alert("Please upload both screenshots before completing the task.");
+        toast.fire({ icon: 'warning', title: "Please upload both screenshots before completing the task." });
         return;
       }
 
@@ -172,12 +198,17 @@
       // After "upload", update Firestore user doc
       const userRef = doc(db, "users", currentUser.uid);
       const userSnap = await getDoc(userRef);
-      if (!userSnap.exists()) return alert("User not found");
+      if (!userSnap.exists()) {
+        toast.fire({ icon: 'error', title: "User not found" });
+        btn.disabled = false;
+        btn.textContent = "Complete Task";
+        return;
+      }
 
       const data = userSnap.data();
 
       if (data.completedTasks?.includes(task.id)) {
-        alert("You already completed this task.");
+        toast.fire({ icon: 'info', title: "You already completed this task." });
         btn.disabled = false;
         btn.textContent = "Complete Task";
         return;
@@ -195,7 +226,10 @@
       userData.completedTasks = data.completedTasks ? [...data.completedTasks, task.id] : [task.id];
       userBalanceSpan.textContent = newBalance.toFixed(2);
 
-      alert(`Task "${task.name}" completed! You earned ৳${(task.reward || 0).toFixed(2)}`);
+      toast.fire({
+        icon: 'success',
+        title: `Task "${task.name}" completed! You earned ৳${(task.reward || 0).toFixed(2)}`
+      });
 
       // Reset inputs and reload tasks to update UI
       inputs.forEach(i => i.value = "");
