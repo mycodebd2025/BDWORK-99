@@ -34,17 +34,13 @@
         </div>
 
         <div>
-          <label for="taskViewName" class="block mb-1 font-medium">View Name</label>
-          <input type="text" id="taskViewName" placeholder="Enter button text (e.g. Visit, Watch Now)" class="w-full border rounded px-3 py-2" />
+          <label for="taskView" class="block mb-1 font-medium">View Name (URL)</label>
+          <input type="text" id="taskView" placeholder="Enter view link (e.g. https://example.com)" class="w-full border rounded px-3 py-2" />
         </div>
 
         <div class="flex gap-4 justify-center">
-          <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 transition">
-            Save Task
-          </button>
-          <button type="button" id="resetBtn" class="bg-gray-400 text-white px-6 py-2 rounded hover:bg-gray-500 transition">
-            Reset
-          </button>
+          <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 transition">Save Task</button>
+          <button type="button" id="resetBtn" class="bg-gray-400 text-white px-6 py-2 rounded hover:bg-gray-500 transition">Reset</button>
         </div>
       </form>
     </section>
@@ -60,17 +56,10 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import {
-      getFirestore,
-      collection,
-      doc,
-      setDoc,
-      deleteDoc,
-      onSnapshot
+      getFirestore, collection, getDocs, doc,
+      setDoc, deleteDoc, onSnapshot
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import {
-      getAuth,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
@@ -93,7 +82,7 @@
     const taskNameInput = document.getElementById("taskName");
     const taskDescInput = document.getElementById("taskDesc");
     const taskRewardInput = document.getElementById("taskReward");
-    const taskViewNameInput = document.getElementById("taskViewName");
+    const taskViewInput = document.getElementById("taskView");
     const resetBtn = document.getElementById("resetBtn");
 
     onAuthStateChanged(auth, (user) => {
@@ -122,8 +111,8 @@
           info.innerHTML = `
             <p class="font-semibold text-lg">${task.name}</p>
             <p class="text-gray-600">${task.description || ""}</p>
-            <p class="mt-1 font-semibold text-indigo-600">Reward: ৳${task.reward.toFixed(2)}</p>
-            <p class="text-sm text-gray-500 italic">View Name: ${task.viewName || "N/A"}</p>
+            <p class="mt-1 font-semibold text-indigo-600">Reward: ৳${task.reward?.toFixed(2) || '0.00'}</p>
+            ${task.view ? `<p class="mt-1"><a href="${task.view}" target="_blank" class="text-blue-600 underline">View</a></p>` : ""}
           `;
 
           const controls = document.createElement("div");
@@ -138,7 +127,7 @@
             taskNameInput.value = task.name;
             taskDescInput.value = task.description || "";
             taskRewardInput.value = task.reward;
-            taskViewNameInput.value = task.viewName || "";
+            taskViewInput.value = task.view || "";
             window.scrollTo({ top: 0, behavior: "smooth" });
           };
 
@@ -172,7 +161,7 @@
       taskNameInput.value = "";
       taskDescInput.value = "";
       taskRewardInput.value = "";
-      taskViewNameInput.value = "";
+      taskViewInput.value = "";
     }
 
     resetBtn.addEventListener("click", resetForm);
@@ -184,18 +173,17 @@
       const name = taskNameInput.value.trim();
       const description = taskDescInput.value.trim();
       const reward = parseFloat(taskRewardInput.value);
-      const viewName = taskViewNameInput.value.trim();
+      const view = taskViewInput.value.trim();
 
       if (!name) return alert("Task name is required.");
       if (isNaN(reward) || reward < 0) return alert("Reward must be a valid non-negative number.");
 
       try {
-        const data = { name, description, reward, viewName };
         if (id) {
-          await setDoc(doc(db, "tasks", id), data, { merge: true });
+          await setDoc(doc(db, "tasks", id), { name, description, reward, view }, { merge: true });
           alert("Task updated.");
         } else {
-          await setDoc(doc(collection(db, "tasks")), data);
+          await setDoc(doc(collection(db, "tasks")), { name, description, reward, view });
           alert("Task added.");
         }
         resetForm();
