@@ -41,7 +41,6 @@
 
   <!-- Main Content -->
   <div class="flex-grow w-full lg:ml-64">
-    <!-- Header -->
     <header class="bg-blue-700 text-white p-4 flex justify-between items-center shadow-md sticky top-0 z-30">
       <div class="flex items-center space-x-4">
         <button id="openSidebar" class="lg:hidden text-2xl">
@@ -51,7 +50,6 @@
       </div>
     </header>
 
-    <!-- Content -->
     <main class="p-4 md:p-6 space-y-6">
       <div class="bg-white shadow rounded p-4">
         <div class="text-lg font-semibold text-gray-700 mb-2" id="totalUsersCount">Total Users: ...</div>
@@ -169,26 +167,25 @@
 
         usersTableBody.innerHTML = rowsHtml;
 
-        document.querySelectorAll(".role-select").forEach(select => {
-          select.addEventListener("change", async (e) => {
-            const uid = e.target.getAttribute("data-uid");
-            const newRole = e.target.value;
-            await updateDoc(doc(db, "users", uid), { role: newRole });
-            alert(`User role updated to "${newRole}"`);
-          });
-        });
-
         document.querySelectorAll(".update-balance-btn").forEach(btn => {
           btn.addEventListener("click", async (e) => {
             const uid = e.target.getAttribute("data-uid");
             const input = document.querySelector(`.balance-input[data-uid="${uid}"]`);
+            const select = document.querySelector(`.role-select[data-uid="${uid}"]`);
             const newBalance = parseFloat(input.value);
+            const newRole = select.value;
+
             if (isNaN(newBalance) || newBalance < 0) {
               alert("Please enter a valid non-negative balance.");
               return;
             }
-            await updateDoc(doc(db, "users", uid), { balance: newBalance });
-            alert("Balance updated successfully.");
+
+            await updateDoc(doc(db, "users", uid), {
+              balance: newBalance,
+              role: newRole
+            });
+
+            alert("User balance and role updated successfully.");
           });
         });
 
