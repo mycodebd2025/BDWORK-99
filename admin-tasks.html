@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en" >
 <head>
@@ -5,136 +6,42 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Admin Task Management</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-    rel="stylesheet"
-  />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.12/dist/sweetalert2.min.css" rel="stylesheet" />
 </head>
-<body class="bg-gradient-to-br from-indigo-50 to-white min-h-screen text-gray-900">
+<body class="bg-gray-100 text-gray-900 min-h-screen flex flex-col">
 
-  <main class="max-w-5xl mx-auto p-6 sm:p-10">
-    <h1 class="text-4xl font-extrabold mb-10 text-center text-indigo-700 drop-shadow-sm select-none">
-      🛠️ Manage Tasks
+  <header class="bg-indigo-700 text-white p-6 flex items-center justify-between select-none">
+    <h1 class="text-3xl font-extrabold flex items-center gap-3">
+      <i class="fa-solid fa-tasks"></i> Admin Task Management
     </h1>
+    <a href="admin.html" class="bg-indigo-500 hover:bg-indigo-600 px-4 py-2 rounded font-semibold transition">
+      Back to Admin Dashboard
+    </a>
+  </header>
 
-    <section
-      class="mb-12 bg-white rounded-xl shadow-lg p-8 max-w-lg mx-auto sm:mx-0 sm:max-w-none"
-      aria-label="Add or edit a task"
-    >
-      <h2 class="text-2xl font-semibold mb-6 text-indigo-800 border-b border-indigo-200 pb-2">
-        Add / Edit Task
-      </h2>
+  <main class="max-w-6xl mx-auto p-6 flex-grow">
+    <h2 class="text-2xl font-bold mb-6 text-center text-indigo-800">User Task Submissions</h2>
 
-      <form id="taskForm" class="space-y-6">
-        <input type="hidden" id="taskId" value="" />
-
-        <div>
-          <label
-            for="taskName"
-            class="block mb-2 font-medium text-indigo-700"
-            >Task Name <span class="text-red-500">*</span></label
-          >
-          <input
-            type="text"
-            id="taskName"
-            placeholder="Enter task name"
-            class="w-full border border-indigo-300 rounded-lg px-4 py-3 text-gray-900 placeholder-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-            required
-          />
-        </div>
-
-        <div>
-          <label
-            for="taskDesc"
-            class="block mb-2 font-medium text-indigo-700"
-            >Description</label
-          >
-          <textarea
-            id="taskDesc"
-            placeholder="Enter task description (optional)"
-            class="w-full border border-indigo-300 rounded-lg px-4 py-3 text-gray-900 placeholder-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition resize-none"
-            rows="4"
-          ></textarea>
-        </div>
-
-        <div>
-          <label
-            for="taskReward"
-            class="block mb-2 font-medium text-indigo-700"
-            >Reward Amount (৳) <span class="text-red-500">*</span></label
-          >
-          <input
-            type="number"
-            id="taskReward"
-            placeholder="Enter reward amount (e.g. 5)"
-            class="w-full border border-indigo-300 rounded-lg px-4 py-3 text-gray-900 placeholder-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-            min="0"
-            step="0.01"
-            required
-          />
-        </div>
-
-        <div>
-          <label
-            for="taskView"
-            class="block mb-2 font-medium text-indigo-700"
-            >View Name (URL)</label
-          >
-          <input
-            type="url"
-            id="taskView"
-            placeholder="Enter view link (e.g. https://example.com)"
-            class="w-full border border-indigo-300 rounded-lg px-4 py-3 text-gray-900 placeholder-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-          />
-        </div>
-
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <button
-            type="submit"
-            class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-8 py-3 rounded-lg shadow-md transition focus:outline-none focus:ring-4 focus:ring-indigo-400"
-          >
-            Save Task
-          </button>
-          <button
-            type="button"
-            id="resetBtn"
-            class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-8 py-3 rounded-lg shadow-md transition focus:outline-none focus:ring-4 focus:ring-gray-400"
-          >
-            Reset
-          </button>
-        </div>
-      </form>
-    </section>
-
-    <section aria-label="List of all tasks">
-      <h2
-        class="text-2xl font-semibold mb-6 text-indigo-800 border-b border-indigo-200 pb-2 max-w-2xl mx-auto"
-      >
-        All Tasks
-      </h2>
-      <div
-        id="tasksList"
-        class="space-y-5 max-w-4xl mx-auto"
-        role="list"
-        aria-live="polite"
-      >
-        <p class="text-center text-indigo-400 italic">Loading tasks...</p>
-      </div>
-    </section>
+    <div id="submissionsList" class="space-y-8">
+      <p class="text-center text-gray-500">Loading submissions...</p>
+    </div>
   </main>
+
+  <footer class="bg-white text-center py-4 text-gray-500 select-none">
+    &copy; 2025 Your Company
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.12/dist/sweetalert2.all.min.js"></script>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import {
-      getFirestore,
-      collection,
-      getDocs,
-      doc,
-      setDoc,
-      deleteDoc,
-      onSnapshot,
+      getFirestore, collection, onSnapshot, doc, getDoc, updateDoc, query, orderBy
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import {
+      getAuth, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
@@ -143,154 +50,185 @@
       storageBucket: "bdwork-346d3.appspot.com",
       messagingSenderId: "900963179093",
       appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
-      measurementId: "G-FM1YJ8E5GK",
+      measurementId: "G-FM1YJ8E5GK"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    const tasksCol = collection(db, "tasks");
-    const tasksList = document.getElementById("tasksList");
-    const taskForm = document.getElementById("taskForm");
-    const taskIdInput = document.getElementById("taskId");
-    const taskNameInput = document.getElementById("taskName");
-    const taskDescInput = document.getElementById("taskDesc");
-    const taskRewardInput = document.getElementById("taskReward");
-    const taskViewInput = document.getElementById("taskView");
-    const resetBtn = document.getElementById("resetBtn");
+    const submissionsList = document.getElementById("submissionsList");
 
-    onAuthStateChanged(auth, (user) => {
+    let currentUser = null;
+
+    onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        alert("Please log in first.");
-        window.location.href = "login.html";
+        Swal.fire({
+          icon: "warning",
+          title: "Please log in as admin.",
+          showConfirmButton: false,
+          timer: 1500,
+          position: "top-end",
+        });
+        setTimeout(() => {
+          window.location.href = "login.html";
+        }, 1500);
         return;
       }
-      loadTasksRealtime();
+      currentUser = user;
+
+      // Verify user is admin
+      const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+      if (!userDoc.exists() || userDoc.data().role !== "admin") {
+        Swal.fire({
+          icon: "error",
+          title: "Access denied",
+          text: "You are not authorized to view this page.",
+          showConfirmButton: false,
+          timer: 2000,
+          position: "top-end",
+        });
+        setTimeout(() => {
+          window.location.href = "dashboard.html";
+        }, 2000);
+        return;
+      }
+
+      loadSubmissions();
     });
 
-    function loadTasksRealtime() {
-      onSnapshot(tasksCol, (snapshot) => {
+    function loadSubmissions() {
+      const submissionsCol = collection(db, "taskSubmissions");
+      const q = query(submissionsCol, orderBy("submittedAt", "desc"));
+
+      onSnapshot(q, (snapshot) => {
         if (snapshot.empty) {
-          tasksList.innerHTML =
-            '<p class="text-center text-indigo-500 italic">No tasks found.</p>';
+          submissionsList.innerHTML = "<p class='text-center text-gray-500 text-lg'>No submissions yet.</p>";
           return;
         }
 
-        tasksList.innerHTML = "";
-        snapshot.forEach((docSnap) => {
-          const task = { id: docSnap.id, ...docSnap.data() };
-          const taskDiv = document.createElement("div");
-          taskDiv.className =
-            "p-5 bg-white rounded-xl shadow-md flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-0";
+        submissionsList.innerHTML = "";
+        snapshot.forEach(async (docSnap) => {
+          const submission = { id: docSnap.id, ...docSnap.data() };
 
-          const info = document.createElement("div");
-          info.className = "flex-1 min-w-0";
+          // Get user email or fallback
+          let userEmail = "(unknown)";
+          try {
+            const userDoc = await getDoc(doc(db, "users", submission.userId));
+            if (userDoc.exists()) userEmail = userDoc.data().email || userEmail;
+          } catch { /* ignore */ }
 
-          info.innerHTML = `
-            <p class="font-semibold text-lg text-indigo-700 truncate">${task.name}</p>
-            <p class="text-gray-600 text-sm mt-1 line-clamp-2">${task.description || ""}</p>
-            <p class="mt-2 font-semibold text-indigo-600">Reward: ৳${task.reward?.toFixed(2) || "0.00"}</p>
-            ${
-              task.view
-                ? `<p class="mt-1"><a href="${task.view}" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline hover:text-blue-800">View</a></p>`
-                : ""
-            }
+          const submittedAt = submission.submittedAt ? submission.submittedAt.toDate().toLocaleString() : "Unknown";
+
+          const decidedAt = submission.decidedAt ? submission.decidedAt.toDate().toLocaleString() : null;
+
+          const card = document.createElement("div");
+          card.className = "bg-white rounded-xl shadow p-6";
+
+          card.innerHTML = `
+            <div class="flex justify-between items-center mb-3">
+              <h3 class="text-xl font-bold text-indigo-700">Task: ${submission.taskName}</h3>
+              <span class="font-semibold text-indigo-600">Reward: ৳${submission.reward.toFixed(2)}</span>
+            </div>
+
+            <p class="mb-1 text-gray-700"><strong>User Email:</strong> ${userEmail}</p>
+            <p class="mb-1 text-gray-700"><strong>Status:</strong> <span class="font-semibold ${
+              submission.status === "approved" ? "text-green-600" : submission.status === "rejected" ? "text-red-600" : "text-yellow-600"
+            }">${submission.status.toUpperCase()}</span></p>
+            <p class="mb-4 text-gray-600"><strong>Submitted:</strong> ${submittedAt}${decidedAt ? " | <strong>Decided:</strong> " + decidedAt : ""}</p>
+
+            <div class="flex gap-4 mb-4 overflow-x-auto">
+              ${submission.screenshots.map(url =>
+                `<a href="${url}" target="_blank" class="block w-40 h-32 overflow-hidden rounded-lg border border-gray-300 shadow hover:shadow-lg transition">
+                  <img src="${url}" alt="Screenshot" class="object-cover w-full h-full" />
+                </a>`).join("")}
+            </div>
+
+            <div class="flex gap-3 justify-end">
+              <button ${submission.status !== "pending" ? "disabled" : ""} data-action="approve" data-id="${submission.id}" class="btn-approve px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition font-semibold flex items-center gap-2">
+                <i class="fa-solid fa-check"></i> Approve
+              </button>
+              <button ${submission.status !== "pending" ? "disabled" : ""} data-action="reject" data-id="${submission.id}" class="btn-reject px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition font-semibold flex items-center gap-2">
+                <i class="fa-solid fa-xmark"></i> Reject
+              </button>
+            </div>
           `;
 
-          const controls = document.createElement("div");
-          controls.className = "flex gap-3 justify-end";
-
-          const editBtn = document.createElement("button");
-          editBtn.className =
-            "bg-yellow-400 hover:bg-yellow-500 px-4 py-2 rounded-lg text-white transition shadow-md focus:outline-none focus:ring-2 focus:ring-yellow-300";
-          editBtn.innerHTML = `<i class="fas fa-edit"></i> Edit`;
-          editBtn.title = "Edit Task";
-          editBtn.onclick = () => {
-            taskIdInput.value = task.id;
-            taskNameInput.value = task.name;
-            taskDescInput.value = task.description || "";
-            taskRewardInput.value = task.reward;
-            taskViewInput.value = task.view || "";
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          };
-
-          const deleteBtn = document.createElement("button");
-          deleteBtn.className =
-            "bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-white transition shadow-md focus:outline-none focus:ring-2 focus:ring-red-400";
-          deleteBtn.innerHTML = `<i class="fas fa-trash"></i> Delete`;
-          deleteBtn.title = "Delete Task";
-          deleteBtn.onclick = async () => {
-            if (
-              confirm(
-                `Delete task "${task.name}"? This action cannot be undone.`
-              )
-            ) {
-              try {
-                await deleteDoc(doc(db, "tasks", task.id));
-                alert("Task deleted.");
-              } catch (error) {
-                alert("Error deleting task: " + error.message);
-              }
-            }
-          };
-
-          controls.appendChild(editBtn);
-          controls.appendChild(deleteBtn);
-
-          taskDiv.appendChild(info);
-          taskDiv.appendChild(controls);
-          tasksList.appendChild(taskDiv);
+          submissionsList.appendChild(card);
         });
+
+        // Attach event listeners to buttons after DOM update
+        setTimeout(() => {
+          document.querySelectorAll("button.btn-approve").forEach(button => {
+            button.onclick = () => handleDecision(button.dataset.id, "approve");
+          });
+          document.querySelectorAll("button.btn-reject").forEach(button => {
+            button.onclick = () => handleDecision(button.dataset.id, "reject");
+          });
+        }, 200);
       });
     }
 
-    function resetForm() {
-      taskIdInput.value = "";
-      taskNameInput.value = "";
-      taskDescInput.value = "";
-      taskRewardInput.value = "";
-      taskViewInput.value = "";
-      taskNameInput.focus();
-    }
+    async function handleDecision(submissionId, decision) {
+      const decisionStr = decision === "approve" ? "Approve" : "Reject";
 
-    resetBtn.addEventListener("click", resetForm);
+      const { value: confirmed } = await Swal.fire({
+        title: `${decisionStr} this task submission?`,
+        icon: decision === "approve" ? "success" : "warning",
+        showCancelButton: true,
+        confirmButtonText: decisionStr,
+        cancelButtonText: "Cancel",
+      });
 
-    taskForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const id = taskIdInput.value.trim();
-      const name = taskNameInput.value.trim();
-      const description = taskDescInput.value.trim();
-      const reward = parseFloat(taskRewardInput.value);
-      const view = taskViewInput.value.trim();
-
-      if (!name) return alert("Task name is required.");
-      if (isNaN(reward) || reward < 0)
-        return alert("Reward must be a valid non-negative number.");
+      if (!confirmed) return;
 
       try {
-        if (id) {
-          await setDoc(
-            doc(db, "tasks", id),
-            { name, description, reward, view },
-            { merge: true }
-          );
-          alert("Task updated.");
-        } else {
-          await setDoc(doc(collection(db, "tasks")), {
-            name,
-            description,
-            reward,
-            view,
-          });
-          alert("Task added.");
+        const submissionRef = doc(db, "taskSubmissions", submissionId);
+        const submissionSnap = await getDoc(submissionRef);
+        if (!submissionSnap.exists()) {
+          Swal.fire("Error", "Submission not found.", "error");
+          return;
         }
-        resetForm();
+        const submission = submissionSnap.data();
+
+        if (submission.status !== "pending") {
+          Swal.fire("Info", "This submission is already decided.", "info");
+          return;
+        }
+
+        // Update submission doc status & decidedAt
+        await updateDoc(submissionRef, {
+          status: decision === "approve" ? "approved" : "rejected",
+          decidedAt: new Date()
+        });
+
+        // If approved, add reward to user balance
+        if (decision === "approve") {
+          const userRef = doc(db, "users", submission.userId);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            const currentBalance = userData.balance || 0;
+            const newBalance = currentBalance + (submission.reward || 0);
+
+            // Update balance
+            await updateDoc(userRef, { balance: newBalance });
+          }
+        }
+
+        Swal.fire({
+          icon: "success",
+          title: `${decisionStr}d successfully!`,
+          timer: 1800,
+          showConfirmButton: false,
+          position: "top-end"
+        });
       } catch (error) {
-        alert("Error saving task: " + error.message);
+        console.error("Decision error:", error);
+        Swal.fire("Error", "Failed to update submission status.", "error");
       }
-    });
+    }
   </script>
+
 </body>
 </html>
