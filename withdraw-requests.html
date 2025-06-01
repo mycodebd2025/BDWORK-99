@@ -138,23 +138,32 @@
       try {
         const wdDocRef = doc(db, "withdraws", withdrawId);
         const wdDocSnap = await getDoc(wdDocRef);
+
         if (!wdDocSnap.exists()) {
           alert("Withdraw request not found.");
           return;
         }
+
         const wdData = wdDocSnap.data();
 
-        if (wdData.status !== "pending") {
+        if (!wdData.status || wdData.status !== "pending") {
           alert("This request is already processed.");
+          return;
+        }
+
+        if (!wdData.userId) {
+          alert("Withdraw request is missing user ID.");
           return;
         }
 
         const userDocRef = doc(db, "users", wdData.userId);
         const userDocSnap = await getDoc(userDocRef);
+
         if (!userDocSnap.exists()) {
           alert("User data not found.");
           return;
         }
+
         const userData = userDocSnap.data();
 
         if (action === "approved") {
