@@ -22,10 +22,7 @@
         <i class="fas fa-home"></i><span>Dashboard</span>
       </a>
       <a href="admin-tasks.html" class="flex items-center space-x-3 hover:bg-blue-700 p-2 rounded transition">
-      <i class="fas fa-clipboard-list"></i><span>Task Manage</span>
-      </a>
-      <a href="promanage.html" class="flex items-center space-x-3 hover:bg-blue-700 p-2 rounded transition">
-    <i class="fas fa-user-cog"></i><span>Pro Account Manage</span>
+        <i class="fas fa-clipboard-list"></i><span>Task Manage</span>
       </a>
       <a href="#" class="flex items-center space-x-3 bg-blue-700 p-2 rounded transition">
         <i class="fas fa-users"></i><span>Users</span>
@@ -57,6 +54,7 @@
     </header>
 
     <main class="p-4 md:p-6 space-y-6">
+
       <!-- Total Users Section -->
       <div class="bg-white shadow rounded p-4">
         <div class="text-xl font-semibold text-blue-700 mb-2" id="totalUsersCount">Total Users: ...</div>
@@ -80,6 +78,35 @@
           </table>
         </div>
       </div>
+
+      <!-- Pro Account Settings Section -->
+      <div class="bg-white shadow rounded p-4 max-w-md">
+        <h2 class="text-xl font-semibold text-blue-700 mb-4">Pro Account Settings</h2>
+        <form id="proAccountForm" class="space-y-4">
+          <div>
+            <label for="dailyBonus" class="block font-medium mb-1">Daily Bonus (৳)</label>
+            <input type="number" id="dailyBonus" min="0" step="1" class="border rounded px-3 py-2 w-full" required />
+          </div>
+
+          <div>
+            <label class="block font-medium mb-1">Status</label>
+            <select id="activeStatus" class="border rounded px-3 py-2 w-full" required>
+              <option value="true">Active</option>
+              <option value="false">Inactive</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="activationCost" class="block font-medium mb-1">Activation Cost (৳)</label>
+            <input type="number" id="activationCost" min="0" step="1" class="border rounded px-3 py-2 w-full" required />
+          </div>
+
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+            Update Settings
+          </button>
+        </form>
+      </div>
+
     </main>
   </div>
 
@@ -96,7 +123,9 @@
       collection,
       getDocs,
       doc,
-      updateDoc
+      updateDoc,
+      getDoc,
+      setDoc
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -117,6 +146,13 @@
     const logoutBtn = document.getElementById("logoutBtn");
     const totalUsersCountElem = document.getElementById("totalUsersCount");
 
+    // Pro account form elements
+    const proAccountForm = document.getElementById("proAccountForm");
+    const dailyBonusInput = document.getElementById("dailyBonus");
+    const activeStatusSelect = document.getElementById("activeStatus");
+    const activationCostInput = document.getElementById("activationCost");
+    const proAccountDocRef = doc(db, "settings", "proAccount");
+
     logoutBtn.addEventListener("click", async () => {
       await signOut(auth);
       window.location.href = "login.html";
@@ -128,6 +164,7 @@
       } else {
         loadTotalUsersCount();
         loadUsers();
+        loadProAccountSettings();
       }
     });
 
@@ -206,23 +243,70 @@
       }
     }
 
+    // Load Pro Account settings from Firestore
+    async function loadProAccountSettings() {
+      try {
+        const docSnap = await getDoc(proAccountDocRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          dailyBonusInput.value = data.dailyBonus ?? 0;
+          activeStatusSelect.value = data.active ? "true" : "false";
+          activationCostInput.value = data.activationCost ?? 0;
+        } else {
+          // Default values
+          dailyBonusInput.value = 0;
+          activeStatusSelect.value = "false";
+          activationCostInput.value = 0;
+        }
+      } catch (err) {
+        alert("Failed to load Pro Account settings.");
+        console.error(err);
+      }
+    }
+
+    // Handle Pro Account settings form submission
+    proAccountForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const dailyBonus = parseInt(dailyBonusInput.value, 10);
+      const active = activeStatusSelect.value === "true";
+      const activationCost = parseInt(activationCostInput.value, 10);
+
+      if (isNaN(dailyBonus) || dailyBonus < 0 || isNaN(activationCost) || activationCost < 0) {
+        alert("Please enter valid non-negative numbers.");
+        return;
+      }
+
+      try {
+        await setDoc(proAccountDocRef, {
+          dailyBonus,
+          active,
+          activationCost
+        });
+        alert("Pro Account settings updated successfully.");
+      } catch (err) {
+        alert("Failed to update settings.");
+        console.error(err);
+      }
+    });
+
     // Sidebar toggle
     const openSidebarBtn = document.getElementById("openSidebar");
     const closeSidebarBtn = document.getElementById("closeSidebar");
     const sidebar = document.getElementById("sidebar");
     const overlay = document.getElementById("overlay");
 
-    openSidebarBtn?.addEventListener("click", () => {
+    openSidebarBtn.addEventListener("click", () => {
       sidebar.classList.remove("-translate-x-full");
       overlay.classList.remove("hidden");
     });
 
-    closeSidebarBtn?.addEventListener("click", () => {
+    closeSidebarBtn.addEventListener("click", () => {
       sidebar.classList.add("-translate-x-full");
       overlay.classList.add("hidden");
     });
 
-    overlay?.addEventListener("click", () => {
+    overlay.addEventListener("click", () => {
       sidebar.classList.add("-translate-x-full");
       overlay.classList.add("hidden");
     });
