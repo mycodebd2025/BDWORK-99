@@ -89,21 +89,13 @@
           </div>
 
           <div>
-            <label for="validityDays" class="block font-medium mb-1">Validity (days)</label>
-            <input type="number" id="validityDays" min="1" step="1" class="border rounded px-3 py-2 w-full" required />
-          </div>
-
-          <div>
-            <label class="block font-medium mb-1">Status</label>
-            <select id="activeStatus" class="border rounded px-3 py-2 w-full" required>
-              <option value="true">Active</option>
-              <option value="false">Inactive</option>
-            </select>
-          </div>
-
-          <div>
             <label for="activationCost" class="block font-medium mb-1">Activation Cost (৳)</label>
             <input type="number" id="activationCost" min="0" step="1" class="border rounded px-3 py-2 w-full" required />
+          </div>
+
+          <div>
+            <label for="validity" class="block font-medium mb-1">Validity (days)</label>
+            <input type="number" id="validity" min="0" step="1" class="border rounded px-3 py-2 w-full" required />
           </div>
 
           <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
@@ -154,9 +146,8 @@
     // Pro account form elements
     const proAccountForm = document.getElementById("proAccountForm");
     const dailyBonusInput = document.getElementById("dailyBonus");
-    const validityDaysInput = document.getElementById("validityDays");
-    const activeStatusSelect = document.getElementById("activeStatus");
     const activationCostInput = document.getElementById("activationCost");
+    const validityInput = document.getElementById("validity");
     const proAccountDocRef = doc(db, "settings", "proAccount");
 
     // Logout
@@ -266,14 +257,12 @@
         if (docSnap.exists()) {
           const data = docSnap.data();
           dailyBonusInput.value = data.dailyBonus ?? 0;
-          validityDaysInput.value = data.validityDays ?? 30; // Default to 30 if not set
-          activeStatusSelect.value = data.active ? "true" : "false";
           activationCostInput.value = data.activationCost ?? 0;
+          validityInput.value = data.validity ?? 0;
         } else {
           dailyBonusInput.value = 0;
-          validityDaysInput.value = 30; // Default validity
-          activeStatusSelect.value = "false";
           activationCostInput.value = 0;
+          validityInput.value = 0;
         }
       } catch (err) {
         alert("Failed to load Pro Account settings.");
@@ -285,25 +274,23 @@
     proAccountForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const dailyBonus = parseInt(dailyBonusInput.value, 10);
-      const validityDays = parseInt(validityDaysInput.value, 10);
-      const active = activeStatusSelect.value === "true";
       const activationCost = parseInt(activationCostInput.value, 10);
+      const validity = parseInt(validityInput.value, 10);
 
       if (
         isNaN(dailyBonus) || dailyBonus < 0 ||
-        isNaN(validityDays) || validityDays < 1 ||
-        isNaN(activationCost) || activationCost < 0
+        isNaN(activationCost) || activationCost < 0 ||
+        isNaN(validity) || validity < 0
       ) {
-        alert("Please enter valid non-negative numbers. Validity must be at least 1 day.");
+        alert("Please enter valid non-negative numbers.");
         return;
       }
 
       try {
         await setDoc(proAccountDocRef, {
           dailyBonus,
-          validityDays,
-          active,
-          activationCost
+          activationCost,
+          validity
         });
         alert("Pro Account settings updated successfully.");
       } catch (err) {
