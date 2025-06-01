@@ -21,13 +21,14 @@
         <p class="text-sm text-gray-500 mt-6 mb-1">Balance</p>
         <p id="userBalance" class="text-xl font-bold text-green-600">৳0</p>
 
-        <!-- Account Status (Pro/Regular) -->
+        <!-- Account Status (Pro/Regular) with Pro Activation UI -->
         <p class="text-sm text-gray-500 mt-6 mb-1">Account Status</p>
         <p id="proStatus" class="text-lg font-semibold"></p>
+
         <button id="activateProBtn" class="mt-2 bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition">
           Activate Pro Account (৳10)
         </button>
-        <p id="proCostText" class="text-xs text-gray-600 mt-1">৳10</p>
+        <p id="proPriceNote" class="text-xs text-gray-500 mt-1">Activation costs ৳10</p>
       </div>
 
       <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
@@ -126,7 +127,6 @@
     const userReferCodeElem = document.getElementById("userReferCode");
     const proStatusElem = document.getElementById("proStatus");
     const activateProBtn = document.getElementById("activateProBtn");
-    const proCostText = document.getElementById("proCostText");
 
     // Helper to format date as YYYY-MM-DD
     function formatDate(date) {
@@ -178,21 +178,19 @@
           // Show Account status: Pro or Regular
           if (data.proActive) {
             proStatusElem.innerHTML = `<span class="text-green-600 font-semibold">Pro Account</span>`;
-            activateProBtn.innerText = "Already Activated";
             activateProBtn.disabled = true;
+            activateProBtn.innerText = "Already Activated";
             activateProBtn.classList.remove("bg-yellow-500", "hover:bg-yellow-600");
             activateProBtn.classList.add("bg-gray-400", "cursor-not-allowed");
-            proCostText.style.display = "none";
 
             // Add daily bonus if not added today
             await addDailyBonusIfEligible(userDocRef, data);
           } else {
             proStatusElem.innerHTML = `<span class="text-gray-700 font-semibold">Regular</span>`;
-            activateProBtn.innerText = "Activate Pro Account (৳10)";
             activateProBtn.disabled = false;
+            activateProBtn.innerText = "Activate Pro Account (৳10)";
             activateProBtn.classList.remove("bg-gray-400", "cursor-not-allowed");
             activateProBtn.classList.add("bg-yellow-500", "hover:bg-yellow-600");
-            proCostText.style.display = "block";
           }
 
           // Activate Pro button event
@@ -218,11 +216,10 @@
 
               userBalanceElem.innerText = `৳${newBalance}`;
               proStatusElem.innerHTML = `<span class="text-green-600 font-semibold">Pro Account</span>`;
-              activateProBtn.innerText = "Already Activated";
               activateProBtn.disabled = true;
+              activateProBtn.innerText = "Already Activated";
               activateProBtn.classList.remove("bg-yellow-500", "hover:bg-yellow-600");
               activateProBtn.classList.add("bg-gray-400", "cursor-not-allowed");
-              proCostText.style.display = "none";
 
               alert("✅ Pro Account activated! You will receive ৳30 daily bonus at midnight.");
             } catch (err) {
