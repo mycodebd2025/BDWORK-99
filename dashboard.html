@@ -36,7 +36,7 @@
       </div>
     </section>
 
-    <!-- Task Section Button -->
+    <!-- Task Section -->
     <section class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
       <h2 class="text-xl font-semibold mb-4">🎯 Complete Tasks & Earn ৳5 Each</h2>
       <a href="job.html" class="block w-full text-center bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition">
@@ -44,36 +44,12 @@
       </a>
     </section>
 
-    <!-- Withdraw Section -->
+    <!-- Withdraw Redirect Section -->
     <section class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
       <h2 class="text-xl font-semibold mb-4">💸 Withdraw Balance</h2>
-      <div class="flex flex-col gap-4">
-        <select id="withdrawMethod" class="border border-gray-300 rounded-md px-4 py-2 w-full focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-          <option value="">Select Method</option>
-          <option value="BKash">BKash</option>
-          <option value="Nagad">Nagad</option>
-          <option value="USDT">USDT</option>
-        </select>
-        
-        <input
-          id="withdrawAmount"
-          type="number"
-          min="1"
-          placeholder="Enter amount"
-          class="border border-gray-300 rounded-md px-4 py-2 w-full focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-        />
-
-        <input
-          id="withdrawAddress"
-          type="text"
-          placeholder="Enter Number / Wallet Address"
-          class="border border-gray-300 rounded-md px-4 py-2 w-full focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-        />
-
-        <button onclick="withdraw()" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 w-full transition">
-          Withdraw
-        </button>
-      </div>
+      <a href="withdraw.html" class="block w-full text-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition">
+        Go to Withdraw Page →
+      </a>
     </section>
 
     <!-- Withdraw History Redirect -->
@@ -105,7 +81,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import {
-      getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, Timestamp
+      getFirestore, doc, getDoc, collection, query, where, getDocs
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const app = initializeApp(firebaseConfig);
@@ -134,52 +110,6 @@
         alert("Failed to load user data: " + err.message);
       }
     });
-
-    window.withdraw = async function () {
-      const amountInput = document.getElementById("withdrawAmount");
-      const methodInput = document.getElementById("withdrawMethod");
-      const addressInput = document.getElementById("withdrawAddress");
-
-      const amount = parseFloat(amountInput.value);
-      const method = methodInput.value.trim();
-      const address = addressInput.value.trim();
-
-      if (isNaN(amount) || amount <= 0) return alert("Enter valid amount.");
-      if (!method) return alert("Please select a withdrawal method.");
-      if (!address) return alert("Please enter number or wallet address.");
-      if (!currentUserData) return alert("User data not loaded yet.");
-
-      const currentBalance = currentUserData.balance || 0;
-      if (amount > currentBalance) return alert("Insufficient balance.");
-
-      try {
-        await addDoc(collection(db, "withdraws"), {
-          uid: currentUserData.uid,
-          userId: currentUserData.uid,
-          userEmail: currentUserData.email,
-          amount: amount,
-          method: method,
-          address: address,
-          timestamp: Timestamp.now(),
-          status: "pending"
-        });
-
-        const userDocRef = doc(db, "users", currentUserData.uid);
-        const newBalance = currentBalance - amount;
-        await updateDoc(userDocRef, { balance: newBalance });
-        currentUserData.balance = newBalance;
-
-        document.getElementById("userBalance").innerText = `৳${newBalance}`;
-        amountInput.value = "";
-        methodInput.value = "";
-        addressInput.value = "";
-
-        alert(`Withdraw request of ৳${amount} submitted via ${method}!`);
-        window.location.reload();
-      } catch (err) {
-        alert("Error: " + err.message);
-      }
-    };
 
     window.logout = async function () {
       await signOut(auth);
