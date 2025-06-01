@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>User Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans">
 
@@ -20,6 +20,13 @@
 
         <p class="text-sm text-gray-500 mt-6 mb-1">Balance</p>
         <p id="userBalance" class="text-xl font-bold text-green-600">৳0</p>
+
+        <!-- Pro Account Status -->
+        <p class="text-sm text-gray-500 mt-6 mb-1">Pro Account Status</p>
+        <p id="proStatus" class="text-lg font-semibold"></p>
+        <button id="activateProBtn" class="mt-2 bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition hidden">
+          Activate Pro Account (৳10)
+        </button>
       </div>
 
       <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
@@ -90,7 +97,6 @@
     </div>
   </main>
 
-  <!-- JavaScript: Firebase + Dashboard Logic -->
   <script type="module">
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
@@ -113,6 +119,42 @@
     const db = getFirestore(app);
     let currentUserData = null;
 
+    const userEmailElem = document.getElementById("userEmail");
+    const userBalanceElem = document.getElementById("userBalance");
+    const totalRefersElem = document.getElementById("totalRefers");
+    const userReferCodeElem = document.getElementById("userReferCode");
+    const proStatusElem = document.getElementById("proStatus");
+    const activateProBtn = document.getElementById("activateProBtn");
+
+    // Helper to format date as YYYY-MM-DD
+    function formatDate(date) {
+      return date.toISOString().split('T')[0];
+    }
+
+    async function addDailyBonusIfEligible(userDocRef, userData) {
+      if (!userData.proActive) return; // Not a pro user
+
+      const todayStr = formatDate(new Date());
+      const lastBonusDate = userData.lastBonusDate || "";
+
+      if (lastBonusDate === todayStr) return; // Already given bonus today
+
+      // Add 30 Tk bonus
+      const newBalance = (userData.balance || 0) + 30;
+      try {
+        await updateDoc(userDocRef, {
+          balance: newBalance,
+          lastBonusDate: todayStr
+        });
+        currentUserData.balance = newBalance;
+        currentUserData.lastBonusDate = todayStr;
+        userBalanceElem.innerText = `৳${newBalance}`;
+        alert("🎉 Pro Account daily bonus ৳30 added!");
+      } catch (err) {
+        console.error("Failed to add daily bonus:", err);
+      }
+    }
+
     onAuthStateChanged(auth, async (user) => {
       if (!user) return window.location.href = "login.html";
 
@@ -122,13 +164,57 @@
         if (userDoc.exists()) {
           const data = userDoc.data();
           currentUserData = { uid: user.uid, ...data };
-          document.getElementById("userEmail").innerText = data.email;
-          document.getElementById("userBalance").innerText = `৳${data.balance || 0}`;
-          document.getElementById("userReferCode").value = user.uid;
+
+          userEmailElem.innerText = data.email || "N/A";
+          userBalanceElem.innerText = `৳${data.balance || 0}`;
+          userReferCodeElem.value = user.uid;
 
           const referQuery = query(collection(db, "users"), where("referredBy", "==", user.uid));
           const referSnapshot = await getDocs(referQuery);
-          document.getElementById("totalRefers").innerText = referSnapshot.size;
+          totalRefersElem.innerText = referSnapshot.size;
+
+          // Show Pro status
+          if (data.proActive) {
+            proStatusElem.innerHTML = `<span class="text-green-600 font-semibold">Active</span>`;
+            activateProBtn.style.display = "none";
+
+            // Add daily bonus if not added today
+            await addDailyBonusIfEligible(userDocRef, data);
+          } else {
+            proStatusElem.innerHTML = `<span class="text-red-600 font-semibold">Inactive</span>`;
+            activateProBtn.style.display = "inline-block";
+          }
+
+          // Activate Pro button event
+          activateProBtn.onclick = async () => {
+            if (!currentUserData) return alert("User data not loaded yet.");
+            const balance = currentUserData.balance || 0;
+            if (balance < 10) return alert("Insufficient balance to activate Pro Account (৳10 needed).");
+
+            if (!confirm("Are you sure you want to activate Pro Account for ৳10?")) return;
+
+            try {
+              const newBalance = balance - 10;
+              await updateDoc(userDocRef, {
+                balance: newBalance,
+                proActive: true,
+                proActivatedAt: Timestamp.now(),
+                lastBonusDate: "" // reset last bonus date to allow bonus next day
+              });
+              currentUserData.balance = newBalance;
+              currentUserData.proActive = true;
+              currentUserData.proActivatedAt = Timestamp.now();
+              currentUserData.lastBonusDate = "";
+
+              userBalanceElem.innerText = `৳${newBalance}`;
+              proStatusElem.innerHTML = `<span class="text-green-600 font-semibold">Active</span>`;
+              activateProBtn.style.display = "none";
+
+              alert("✅ Pro Account activated! You will receive ৳30 daily bonus at midnight.");
+            } catch (err) {
+              alert("Failed to activate Pro Account: " + err.message);
+            }
+          };
         }
       } catch (err) {
         alert("Failed to load user data: " + err.message);
@@ -169,7 +255,7 @@
         await updateDoc(userDocRef, { balance: newBalance });
         currentUserData.balance = newBalance;
 
-        document.getElementById("userBalance").innerText = `৳${newBalance}`;
+        userBalanceElem.innerText = `৳${newBalance}`;
         amountInput.value = "";
         methodInput.value = "";
         addressInput.value = "";
