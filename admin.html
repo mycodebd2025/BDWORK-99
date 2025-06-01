@@ -22,7 +22,7 @@
         <i class="fas fa-home"></i><span>Dashboard</span>
       </a>
       <a href="admin-tasks.html" class="flex items-center space-x-3 hover:bg-blue-700 p-2 rounded transition">
-      <i class="fas fa-clipboard-list"></i><span>Task Manage</span>
+        <i class="fas fa-clipboard-list"></i><span>Task Manage</span>
       </a>
       <a href="#" class="flex items-center space-x-3 bg-blue-700 p-2 rounded transition">
         <i class="fas fa-users"></i><span>Users</span>
@@ -68,11 +68,12 @@
                 <th class="p-3 border border-gray-300 text-left">Email</th>
                 <th class="p-3 border border-gray-300 text-left">Balance (৳)</th>
                 <th class="p-3 border border-gray-300 text-left">Role</th>
+                <th class="p-3 border border-gray-300 text-left">Daily Bonus</th>
                 <th class="p-3 border border-gray-300 text-center">Actions</th>
               </tr>
             </thead>
             <tbody id="usersTableBody">
-              <tr><td colspan="4" class="p-4 text-center text-gray-500">Loading users...</td></tr>
+              <tr><td colspan="5" class="p-4 text-center text-gray-500">Loading users...</td></tr>
             </tbody>
           </table>
         </div>
@@ -145,7 +146,7 @@
         const usersSnapshot = await getDocs(usersCol);
 
         if (usersSnapshot.empty) {
-          usersTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center">No users found.</td></tr>`;
+          usersTableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center">No users found.</td></tr>`;
           return;
         }
 
@@ -164,6 +165,12 @@
                   <option value="admin" ${user.role === "admin" ? "selected" : ""}>Admin</option>
                 </select>
               </td>
+              <td class="p-3 border border-gray-300">
+                <select class="dailyBonus-select border rounded px-2 py-1 w-28 focus:outline-none focus:ring-2 focus:ring-blue-400" data-uid="${docSnap.id}">
+                  <option value="active" ${user.dailyBonus === "active" ? "selected" : ""}>Active</option>
+                  <option value="inactive" ${user.dailyBonus === "inactive" ? "selected" : ""}>Inactive</option>
+                </select>
+              </td>
               <td class="p-3 border border-gray-300 text-center">
                 <button class="update-balance-btn bg-green-500 hover:bg-green-600 text-white px-4 py-1 rounded transition" data-uid="${docSnap.id}">
                   Update
@@ -180,25 +187,32 @@
             const uid = e.target.getAttribute("data-uid");
             const input = document.querySelector(`.balance-input[data-uid="${uid}"]`);
             const select = document.querySelector(`.role-select[data-uid="${uid}"]`);
+            const dailyBonusSelect = document.querySelector(`.dailyBonus-select[data-uid="${uid}"]`);
+
             const newBalance = parseFloat(input.value);
             const newRole = select.value;
+            const newDailyBonus = dailyBonusSelect.value;
 
             if (isNaN(newBalance) || newBalance < 0) {
               alert("Please enter a valid non-negative balance.");
               return;
             }
 
-            await updateDoc(doc(db, "users", uid), {
-              balance: newBalance,
-              role: newRole
-            });
-
-            alert("Updated successfully.");
+            try {
+              await updateDoc(doc(db, "users", uid), {
+                balance: newBalance,
+                role: newRole,
+                dailyBonus: newDailyBonus
+              });
+              alert("Updated successfully.");
+            } catch (err) {
+              alert("Update failed: " + err.message);
+            }
           });
         });
 
       } catch (error) {
-        usersTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-600">Error loading users: ${error.message}</td></tr>`;
+        usersTableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-600">Error loading users: ${error.message}</td></tr>`;
         console.error("Error loading users:", error);
       }
     }
