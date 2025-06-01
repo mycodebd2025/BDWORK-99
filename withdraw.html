@@ -92,8 +92,11 @@
 
         const newBalance = currentBalance - amount;
         await updateDoc(doc(db, "users", currentUserData.uid), { balance: newBalance });
-        alert(`Withdraw request of ৳${amount} submitted!`);
-        window.location.href = "dashboard.html";
+
+        alert(`Withdraw request of ৳${amount} submitted successfully!`);
+        amountInput.value = "";
+        methodInput.value = "";
+        addressInput.value = "";
       } catch (err) {
         alert("Error: " + err.message);
       }
