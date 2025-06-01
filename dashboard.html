@@ -5,104 +5,71 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>User Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans">
+<body class="bg-gray-100 min-h-screen flex flex-col">
 
-  <main class="max-w-4xl mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-center mb-10">👋 Welcome to Your Dashboard</h1>
+  <header class="bg-blue-700 text-white p-4 flex justify-between items-center">
+    <h1 class="text-xl font-bold">User Dashboard</h1>
+    <button id="logoutBtn" class="bg-red-600 px-4 py-2 rounded hover:bg-red-700">Logout</button>
+  </header>
 
-    <!-- User Info Section -->
-    <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-      <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
-        <p class="text-sm text-gray-500 mb-1">Email</p>
-        <p id="userEmail" class="text-xl font-semibold text-gray-800">Loading...</p>
+  <main class="max-w-3xl mx-auto p-6 flex-grow">
 
-        <p class="text-sm text-gray-500 mt-6 mb-1">Balance</p>
-        <p id="userBalance" class="text-xl font-bold text-green-600">৳0</p>
-
-        <!-- Account Status -->
-        <p class="text-sm text-gray-500 mt-6 mb-1">Account Status</p>
-        <p id="proStatus" class="text-lg font-semibold"></p>
-      </div>
-
-       <!-- Pro Account Section -->
-      <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
-        <button id="activateProBtn" class="mt-2 bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition">
-          Activate Pro Account
-        </button>
-        <p id="proPriceNote" class="text-xs text-gray-500 mt-1">Activation costs ৳10</p>
-      </div>
-
-      <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
-        <p class="text-sm text-gray-500 mb-1">Total Refers</p>
-        <p id="totalRefers" class="text-xl font-semibold text-gray-800">0</p>
-
-        <p class="text-sm text-gray-500 mt-6 mb-2">Your Refer Code</p>
-        <div class="flex items-center gap-3">
-          <input id="userReferCode" readonly class="text-lg font-mono font-semibold text-blue-800 bg-blue-50 px-3 py-2 rounded w-full border border-blue-200" />
-          <button onclick="copyReferCode()" class="bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 text-sm transition">
-            Copy
-          </button>
-        </div>
-      </div>
+    <section class="bg-white rounded shadow p-6 mb-6">
+      <h2 class="text-xl font-semibold mb-4">Your Profile</h2>
+      <p><strong>Email:</strong> <span id="userEmail">Loading...</span></p>
+      <p><strong>Balance:</strong> ৳<span id="userBalance">0</span></p>
+      <p><strong>Referral Count:</strong> <span id="referralCount">0</span></p>
     </section>
 
-    <!-- Task Section Button -->
-    <section class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
-      <h2 class="text-xl font-semibold mb-4">🎯 Complete Tasks & Earn ৳5 Each</h2>
-      <a href="job.html" class="block w-full text-center bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition">
-        Go to Tasks Page →
-      </a>
+    <section class="bg-white rounded shadow p-6 mb-6">
+      <h2 class="text-xl font-semibold mb-4">Pro Account Status</h2>
+      <p><strong>Daily Bonus:</strong> ৳<span id="proDailyBonus">Loading...</span></p>
+      <p><strong>Active:</strong> <span id="proActiveStatus">Loading...</span></p>
     </section>
 
-    <!-- Withdraw Section -->
-    <section class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
-      <h2 class="text-xl font-semibold mb-4">💸 Withdraw Balance</h2>
-      <div class="flex flex-col gap-4">
-        <select id="withdrawMethod" class="border border-gray-300 rounded-md px-4 py-2 w-full focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-          <option value="">Select Method</option>
-          <option value="BKash">BKash</option>
-          <option value="Nagad">Nagad</option>
-          <option value="USDT">USDT</option>
-        </select>
-        
+    <section class="bg-white rounded shadow p-6">
+      <h2 class="text-xl font-semibold mb-4">Request Withdraw</h2>
+      <form id="withdrawForm" class="space-y-4 max-w-sm">
+        <label for="withdrawAmount" class="block font-semibold">Amount (৳)</label>
         <input
-          id="withdrawAmount"
           type="number"
+          id="withdrawAmount"
           min="1"
-          placeholder="Enter amount"
-          class="border border-gray-300 rounded-md px-4 py-2 w-full focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+          required
+          class="w-full border border-gray-300 rounded px-3 py-2"
         />
-
-        <input
-          id="withdrawAddress"
-          type="text"
-          placeholder="Enter Number / Wallet Address"
-          class="border border-gray-300 rounded-md px-4 py-2 w-full focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-        />
-
-        <button onclick="withdraw()" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 w-full transition">
-          Withdraw
+        <button
+          type="submit"
+          class="bg-green-600 text-white px-5 py-2 rounded hover:bg-green-700 transition"
+        >
+          Request Withdraw
         </button>
-      </div>
+      </form>
+      <p id="withdrawMsg" class="mt-4 font-semibold"></p>
     </section>
 
-    <!-- Withdraw History Redirect -->
-    <section class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 mb-8">
-      <h2 class="text-xl font-semibold mb-4">📜 Withdraw History</h2>
-      <a href="withdraw-history.html" class="text-blue-600 hover:underline text-center block">View Withdraw History →</a>
-    </section>
-
-    <!-- Logout -->
-    <div class="text-center">
-      <button onclick="logout()" class="bg-red-600 text-white px-5 py-2 rounded-md hover:bg-red-700 transition text-lg">
-        <i class="fas fa-sign-out-alt mr-2"></i> Logout
-      </button>
-    </div>
   </main>
 
   <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc,
+      updateDoc,
+      collection,
+      addDoc,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // Firebase config - তোমার প্রজেক্টের কনফিগ বসাও
     const firebaseConfig = {
       apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
       authDomain: "bdwork-346d3.firebaseapp.com",
@@ -113,185 +80,114 @@
       measurementId: "G-FM1YJ8E5GK"
     };
 
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-    import {
-      getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, addDoc, Timestamp
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    let currentUserData = null;
 
-    const userEmailElem = document.getElementById("userEmail");
-    const userBalanceElem = document.getElementById("userBalance");
-    const totalRefersElem = document.getElementById("totalRefers");
-    const userReferCodeElem = document.getElementById("userReferCode");
-    const proStatusElem = document.getElementById("proStatus");
-    const activateProBtn = document.getElementById("activateProBtn");
+    // UI Elements
+    const userEmailSpan = document.getElementById("userEmail");
+    const userBalanceSpan = document.getElementById("userBalance");
+    const referralCountSpan = document.getElementById("referralCount");
+    const proDailyBonusSpan = document.getElementById("proDailyBonus");
+    const proActiveStatusSpan = document.getElementById("proActiveStatus");
+    const withdrawForm = document.getElementById("withdrawForm");
+    const withdrawAmountInput = document.getElementById("withdrawAmount");
+    const withdrawMsg = document.getElementById("withdrawMsg");
+    const logoutBtn = document.getElementById("logoutBtn");
 
-    // Helper to format date as YYYY-MM-DD
-    function formatDate(date) {
-      return date.toISOString().split('T')[0];
-    }
+    let currentUserId = null;
+    let currentBalance = 0;
 
-    async function addDailyBonusIfEligible(userDocRef, userData) {
-      if (!userData.proActive) return; // Not a pro user
-
-      const todayStr = formatDate(new Date());
-      const lastBonusDate = userData.lastBonusDate || "";
-
-      if (lastBonusDate === todayStr) return; // Already given bonus today
-
-      // Add 30 Tk bonus
-      const newBalance = (userData.balance || 0) + 30;
-      try {
-        await updateDoc(userDocRef, {
-          balance: newBalance,
-          lastBonusDate: todayStr
-        });
-        currentUserData.balance = newBalance;
-        currentUserData.lastBonusDate = todayStr;
-        userBalanceElem.innerText = `৳${newBalance}`;
-        alert("🎉 Pro Account daily bonus ৳30 added!");
-      } catch (err) {
-        console.error("Failed to add daily bonus:", err);
-      }
-    }
-
+    // Handle user login state
     onAuthStateChanged(auth, async (user) => {
-      if (!user) return window.location.href = "login.html";
-
-      try {
-        const userDocRef = doc(db, "users", user.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-          const data = userDoc.data();
-          currentUserData = { uid: user.uid, ...data };
-
-          userEmailElem.innerText = data.email || "N/A";
-          userBalanceElem.innerText = `৳${data.balance || 0}`;
-          userReferCodeElem.value = user.uid;
-
-          const referQuery = query(collection(db, "users"), where("referredBy", "==", user.uid));
-          const referSnapshot = await getDocs(referQuery);
-          totalRefersElem.innerText = referSnapshot.size;
-
-          // Show Account status: Pro or Regular
-          if (data.proActive) {
-            proStatusElem.innerHTML = `<span class="text-green-600 font-semibold">Pro Account</span>`;
-            activateProBtn.disabled = true;
-            activateProBtn.innerText = "Already Activated";
-            activateProBtn.classList.remove("bg-yellow-500", "hover:bg-yellow-600");
-            activateProBtn.classList.add("bg-gray-400", "cursor-not-allowed");
-
-            // Add daily bonus if not added today
-            await addDailyBonusIfEligible(userDocRef, data);
-          } else {
-            proStatusElem.innerHTML = `<span class="text-gray-700 font-semibold">Regular</span>`;
-            activateProBtn.disabled = false;
-            activateProBtn.innerText = "Activate Pro Account (৳10)";
-            activateProBtn.classList.remove("bg-gray-400", "cursor-not-allowed");
-            activateProBtn.classList.add("bg-yellow-500", "hover:bg-yellow-600");
-          }
-
-          // Activate Pro button event
-          activateProBtn.onclick = async () => {
-            if (!currentUserData) return alert("User data not loaded yet.");
-            const balance = currentUserData.balance || 0;
-            if (balance < 10) return alert("Insufficient balance to activate Pro Account (৳10 needed).");
-
-            if (!confirm("Are you sure you want to activate Pro Account for ৳10?")) return;
-
-            try {
-              const newBalance = balance - 10;
-              await updateDoc(userDocRef, {
-                balance: newBalance,
-                proActive: true,
-                proActivatedAt: Timestamp.now(),
-                lastBonusDate: "" // reset last bonus date to allow bonus next day
-              });
-              currentUserData.balance = newBalance;
-              currentUserData.proActive = true;
-              currentUserData.proActivatedAt = Timestamp.now();
-              currentUserData.lastBonusDate = "";
-
-              userBalanceElem.innerText = `৳${newBalance}`;
-              proStatusElem.innerHTML = `<span class="text-green-600 font-semibold">Pro Account</span>`;
-              activateProBtn.disabled = true;
-              activateProBtn.innerText = "Already Activated";
-              activateProBtn.classList.remove("bg-yellow-500", "hover:bg-yellow-600");
-              activateProBtn.classList.add("bg-gray-400", "cursor-not-allowed");
-
-              alert("✅ Pro Account activated! You will receive ৳30 daily bonus at midnight.");
-            } catch (err) {
-              alert("Failed to activate Pro Account: " + err.message);
-            }
-          };
-        }
-      } catch (err) {
-        alert("Failed to load user data: " + err.message);
+      if (user) {
+        currentUserId = user.uid;
+        userEmailSpan.textContent = user.email;
+        await loadUserData(user.uid);
+        await loadProAccountSettings();
+      } else {
+        // যদি লগইন না থাকে, redirect বা অন্য পেজে পাঠাতে পারো
+        window.location.href = "login.html"; // তোমার লগইন পেজ
       }
     });
 
-    window.withdraw = async function () {
-      const amountInput = document.getElementById("withdrawAmount");
-      const methodInput = document.getElementById("withdrawMethod");
-      const addressInput = document.getElementById("withdrawAddress");
-
-      const amount = parseFloat(amountInput.value);
-      const method = methodInput.value.trim();
-      const address = addressInput.value.trim();
-
-      if (isNaN(amount) || amount <= 0) return alert("Enter valid amount.");
-      if (!method) return alert("Please select a withdrawal method.");
-      if (!address) return alert("Please enter number or wallet address.");
-      if (!currentUserData) return alert("User data not loaded yet.");
-
-      const currentBalance = currentUserData.balance || 0;
-      if (amount > currentBalance) return alert("Insufficient balance.");
-
-      try {
-        await addDoc(collection(db, "withdraws"), {
-          uid: currentUserData.uid,
-          userId: currentUserData.uid,
-          userEmail: currentUserData.email,
-          amount: amount,
-          method: method,
-          address: address,
-          timestamp: Timestamp.now(),
-          status: "pending"
-        });
-
-        const userDocRef = doc(db, "users", currentUserData.uid);
-        const newBalance = currentBalance - amount;
-        await updateDoc(userDocRef, { balance: newBalance });
-        currentUserData.balance = newBalance;
-
-        userBalanceElem.innerText = `৳${newBalance}`;
-        amountInput.value = "";
-        methodInput.value = "";
-        addressInput.value = "";
-
-        alert(`Withdraw request of ৳${amount} submitted via ${method}!`);
-        window.location.reload();
-      } catch (err) {
-        alert("Error: " + err.message);
-      }
-    };
-
-    window.logout = async function () {
+    // লগআউট ফাংশন
+    logoutBtn.addEventListener("click", async () => {
       await signOut(auth);
       window.location.href = "login.html";
-    };
+    });
 
-    window.copyReferCode = function () {
-      const input = document.getElementById("userReferCode");
-      input.select();
-      input.setSelectionRange(0, 99999);
-      navigator.clipboard.writeText(input.value).then(() => alert("Refer code copied!"));
-    };
+    // ইউজার ডেটা লোড
+    async function loadUserData(uid) {
+      try {
+        const userDoc = await getDoc(doc(db, "users", uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          currentBalance = data.balance ?? 0;
+          userBalanceSpan.textContent = currentBalance;
+          referralCountSpan.textContent = data.referralCount ?? 0;
+        } else {
+          userBalanceSpan.textContent = "0";
+          referralCountSpan.textContent = "0";
+        }
+      } catch (err) {
+        console.error("Failed to load user data:", err);
+      }
+    }
+
+    // Pro Account সেটিংস লোড
+    async function loadProAccountSettings() {
+      try {
+        const proDoc = await getDoc(doc(db, "settings", "proAccount"));
+        if (proDoc.exists()) {
+          const data = proDoc.data();
+          proDailyBonusSpan.textContent = data.dailyBonus ?? "N/A";
+          proActiveStatusSpan.textContent = data.active ? "Active" : "Inactive";
+        } else {
+          proDailyBonusSpan.textContent = "N/A";
+          proActiveStatusSpan.textContent = "N/A";
+        }
+      } catch (err) {
+        console.error("Failed to load pro account settings:", err);
+      }
+    }
+
+    // Withdraw রিকোয়েস্ট সাবমিট করা
+    withdrawForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      withdrawMsg.textContent = "";
+      const amount = parseInt(withdrawAmountInput.value, 10);
+
+      if (isNaN(amount) || amount <= 0) {
+        withdrawMsg.textContent = "Please enter a valid positive amount.";
+        withdrawMsg.className = "text-red-600 font-semibold mt-2";
+        return;
+      }
+
+      if (amount > currentBalance) {
+        withdrawMsg.textContent = "Insufficient balance.";
+        withdrawMsg.className = "text-red-600 font-semibold mt-2";
+        return;
+      }
+
+      try {
+        // Withdraw রিকোয়েস্ট ডকুমেন্ট যোগ করো
+        await addDoc(collection(db, "withdrawRequests"), {
+          userId: currentUserId,
+          amount,
+          status: "pending",
+          requestedAt: serverTimestamp()
+        });
+
+        withdrawMsg.textContent = "Withdraw request sent successfully.";
+        withdrawMsg.className = "text-green-600 font-semibold mt-2";
+        withdrawAmountInput.value = "";
+      } catch (err) {
+        withdrawMsg.textContent = "Failed to send request: " + err.message;
+        withdrawMsg.className = "text-red-600 font-semibold mt-2";
+      }
+    });
   </script>
+
 </body>
 </html>
