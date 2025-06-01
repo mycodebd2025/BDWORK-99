@@ -153,11 +153,13 @@
     const activationCostInput = document.getElementById("activationCost");
     const proAccountDocRef = doc(db, "settings", "proAccount");
 
+    // Logout
     logoutBtn.addEventListener("click", async () => {
       await signOut(auth);
       window.location.href = "login.html";
     });
 
+    // Auth state check & initial load
     onAuthStateChanged(auth, user => {
       if (!user) {
         window.location.href = "login.html";
@@ -168,6 +170,7 @@
       }
     });
 
+    // Load total users count
     async function loadTotalUsersCount() {
       try {
         const usersCol = collection(db, "users");
@@ -179,6 +182,7 @@
       }
     }
 
+    // Load users and populate table
     async function loadUsers() {
       try {
         const usersCol = collection(db, "users");
@@ -215,6 +219,7 @@
 
         usersTableBody.innerHTML = rowsHtml;
 
+        // Add event listeners for update buttons
         document.querySelectorAll(".update-balance-btn").forEach(btn => {
           btn.addEventListener("click", async (e) => {
             const uid = e.target.getAttribute("data-uid");
@@ -228,22 +233,27 @@
               return;
             }
 
-            await updateDoc(doc(db, "users", uid), {
-              balance: newBalance,
-              role: newRole
-            });
-
-            alert("Updated successfully.");
+            try {
+              await updateDoc(doc(db, "users", uid), {
+                balance: newBalance,
+                role: newRole
+              });
+              alert("User updated successfully.");
+              loadTotalUsersCount();
+            } catch (err) {
+              alert("Failed to update user.");
+              console.error(err);
+            }
           });
         });
 
-      } catch (error) {
-        usersTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-600">Error loading users: ${error.message}</td></tr>`;
-        console.error("Error loading users:", error);
+      } catch (err) {
+        usersTableBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-600">Failed to load users.</td></tr>`;
+        console.error(err);
       }
     }
 
-    // Load Pro Account settings from Firestore
+    // Load Pro Account Settings
     async function loadProAccountSettings() {
       try {
         const docSnap = await getDoc(proAccountDocRef);
@@ -253,7 +263,6 @@
           activeStatusSelect.value = data.active ? "true" : "false";
           activationCostInput.value = data.activationCost ?? 0;
         } else {
-          // Default values
           dailyBonusInput.value = 0;
           activeStatusSelect.value = "false";
           activationCostInput.value = 0;
@@ -264,10 +273,9 @@
       }
     }
 
-    // Handle Pro Account settings form submission
+    // Update Pro Account Settings
     proAccountForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-
       const dailyBonus = parseInt(dailyBonusInput.value, 10);
       const active = activeStatusSelect.value === "true";
       const activationCost = parseInt(activationCostInput.value, 10);
@@ -285,15 +293,15 @@
         });
         alert("Pro Account settings updated successfully.");
       } catch (err) {
-        alert("Failed to update settings.");
+        alert("Failed to update Pro Account settings.");
         console.error(err);
       }
     });
 
-    // Sidebar toggle
+    // Sidebar toggle for mobile
+    const sidebar = document.getElementById("sidebar");
     const openSidebarBtn = document.getElementById("openSidebar");
     const closeSidebarBtn = document.getElementById("closeSidebar");
-    const sidebar = document.getElementById("sidebar");
     const overlay = document.getElementById("overlay");
 
     openSidebarBtn.addEventListener("click", () => {
@@ -310,6 +318,7 @@
       sidebar.classList.add("-translate-x-full");
       overlay.classList.add("hidden");
     });
+
   </script>
 </body>
 </html>
