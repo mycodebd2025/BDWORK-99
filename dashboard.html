@@ -26,12 +26,12 @@
         <p id="proStatus" class="text-lg font-semibold"></p>
       </div>
 
-      <!-- Pro Account Section -->
+       <!-- Pro Account Section -->
       <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
         <button id="activateProBtn" class="mt-2 bg-yellow-500 text-white px-4 py-2 rounded-md hover:bg-yellow-600 transition">
           Activate Pro Account
         </button>
-        <p id="proPriceNote" class="text-xs text-gray-500 mt-1">Loading price...</p>
+        <p id="proPriceNote" class="text-xs text-gray-500 mt-1">Activation costs ৳10</p>
       </div>
 
       <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
@@ -123,7 +123,6 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
     let currentUserData = null;
-    let proSettings = null;
 
     const userEmailElem = document.getElementById("userEmail");
     const userBalanceElem = document.getElementById("userBalance");
@@ -131,7 +130,6 @@
     const userReferCodeElem = document.getElementById("userReferCode");
     const proStatusElem = document.getElementById("proStatus");
     const activateProBtn = document.getElementById("activateProBtn");
-    const proPriceNote = document.getElementById("proPriceNote");
 
     // Helper to format date as YYYY-MM-DD
     function formatDate(date) {
@@ -140,15 +138,14 @@
 
     async function addDailyBonusIfEligible(userDocRef, userData) {
       if (!userData.proActive) return; // Not a pro user
-      if (!proSettings || !proSettings.isActive) return; // Pro feature disabled
 
       const todayStr = formatDate(new Date());
       const lastBonusDate = userData.lastBonusDate || "";
 
       if (lastBonusDate === todayStr) return; // Already given bonus today
 
-      // Add daily bonus from proSettings
-      const newBalance = (userData.balance || 0) + (proSettings.dailyBonus || 0);
+      // Add 30 Tk bonus
+      const newBalance = (userData.balance || 0) + 30;
       try {
         await updateDoc(userDocRef, {
           balance: newBalance,
@@ -157,32 +154,14 @@
         currentUserData.balance = newBalance;
         currentUserData.lastBonusDate = todayStr;
         userBalanceElem.innerText = `৳${newBalance}`;
-        alert(`🎉 Pro Account daily bonus ৳${proSettings.dailyBonus} added!`);
+        alert("🎉 Pro Account daily bonus ৳30 added!");
       } catch (err) {
         console.error("Failed to add daily bonus:", err);
       }
     }
 
-    async function loadProSettings() {
-      try {
-        const proDocRef = doc(db, "pro_settings", "GwKU5u0bbA");
-        const proDocSnap = await getDoc(proDocRef);
-        if (proDocSnap.exists()) {
-          proSettings = proDocSnap.data();
-          proPriceNote.innerText = `Activation costs ৳${proSettings.activationCost || 10}`;
-        } else {
-          proPriceNote.innerText = "Pro Settings not found";
-        }
-      } catch (err) {
-        proPriceNote.innerText = "Failed to load Pro settings";
-        console.error(err);
-      }
-    }
-
     onAuthStateChanged(auth, async (user) => {
       if (!user) return window.location.href = "login.html";
-
-      await loadProSettings();
 
       try {
         const userDocRef = doc(db, "users", user.uid);
@@ -212,7 +191,7 @@
           } else {
             proStatusElem.innerHTML = `<span class="text-gray-700 font-semibold">Regular</span>`;
             activateProBtn.disabled = false;
-            activateProBtn.innerText = `Activate Pro Account (৳${proSettings?.activationCost || 10})`;
+            activateProBtn.innerText = "Activate Pro Account (৳10)";
             activateProBtn.classList.remove("bg-gray-400", "cursor-not-allowed");
             activateProBtn.classList.add("bg-yellow-500", "hover:bg-yellow-600");
           }
@@ -221,13 +200,12 @@
           activateProBtn.onclick = async () => {
             if (!currentUserData) return alert("User data not loaded yet.");
             const balance = currentUserData.balance || 0;
-            const cost = proSettings?.activationCost || 10;
-            if (balance < cost) return alert(`Insufficient balance to activate Pro Account (৳${cost} needed).`);
+            if (balance < 10) return alert("Insufficient balance to activate Pro Account (৳10 needed).");
 
-            if (!confirm(`Are you sure you want to activate Pro Account for ৳${cost}?`)) return;
+            if (!confirm("Are you sure you want to activate Pro Account for ৳10?")) return;
 
             try {
-              const newBalance = balance - cost;
+              const newBalance = balance - 10;
               await updateDoc(userDocRef, {
                 balance: newBalance,
                 proActive: true,
@@ -246,75 +224,74 @@
               activateProBtn.classList.remove("bg-yellow-500", "hover:bg-yellow-600");
               activateProBtn.classList.add("bg-gray-400", "cursor-not-allowed");
 
-              alert("🎉 You have activated Pro Account successfully!");
-            } catch (error) {
-              alert("Failed to activate Pro Account. Try again later.");
-              console.error(error);
+              alert("✅ Pro Account activated! You will receive ৳30 daily bonus at midnight.");
+            } catch (err) {
+              alert("Failed to activate Pro Account: " + err.message);
             }
           };
-        } else {
-          alert("User data not found.");
-          await signOut(auth);
-          window.location.href = "login.html";
         }
       } catch (err) {
-        console.error(err);
-        alert("Failed to load user data.");
-        await signOut(auth);
-        window.location.href = "login.html";
+        alert("Failed to load user data: " + err.message);
       }
     });
 
-    function copyReferCode() {
-      navigator.clipboard.writeText(userReferCodeElem.value).then(() => {
-        alert("Referral code copied!");
-      });
-    }
+    window.withdraw = async function () {
+      const amountInput = document.getElementById("withdrawAmount");
+      const methodInput = document.getElementById("withdrawMethod");
+      const addressInput = document.getElementById("withdrawAddress");
 
-    async function withdraw() {
-      if (!currentUserData) return alert("User not loaded");
+      const amount = parseFloat(amountInput.value);
+      const method = methodInput.value.trim();
+      const address = addressInput.value.trim();
 
-      const method = document.getElementById("withdrawMethod").value.trim();
-      const amount = parseFloat(document.getElementById("withdrawAmount").value);
-      const address = document.getElementById("withdrawAddress").value.trim();
+      if (isNaN(amount) || amount <= 0) return alert("Enter valid amount.");
+      if (!method) return alert("Please select a withdrawal method.");
+      if (!address) return alert("Please enter number or wallet address.");
+      if (!currentUserData) return alert("User data not loaded yet.");
 
-      if (!method) return alert("Please select a withdraw method.");
-      if (!amount || amount <= 0) return alert("Please enter a valid amount.");
-      if (amount > (currentUserData.balance || 0)) return alert("Insufficient balance.");
-      if (!address) return alert("Please enter your withdraw number or wallet address.");
+      const currentBalance = currentUserData.balance || 0;
+      if (amount > currentBalance) return alert("Insufficient balance.");
 
       try {
-        // Add withdraw request doc
-        await addDoc(collection(db, "withdraw_requests"), {
+        await addDoc(collection(db, "withdraws"), {
+          uid: currentUserData.uid,
           userId: currentUserData.uid,
-          method,
-          amount,
-          address,
-          status: "pending",
-          requestedAt: Timestamp.now(),
-          userEmail: currentUserData.email || "",
+          userEmail: currentUserData.email,
+          amount: amount,
+          method: method,
+          address: address,
+          timestamp: Timestamp.now(),
+          status: "pending"
         });
 
-        alert("Withdraw request submitted successfully! Wait for approval.");
+        const userDocRef = doc(db, "users", currentUserData.uid);
+        const newBalance = currentBalance - amount;
+        await updateDoc(userDocRef, { balance: newBalance });
+        currentUserData.balance = newBalance;
 
-        // Optionally: reduce user balance only after admin approval (do NOT reduce here)
-        // So we don't update balance now.
+        userBalanceElem.innerText = `৳${newBalance}`;
+        amountInput.value = "";
+        methodInput.value = "";
+        addressInput.value = "";
 
-        // Clear inputs
-        document.getElementById("withdrawMethod").value = "";
-        document.getElementById("withdrawAmount").value = "";
-        document.getElementById("withdrawAddress").value = "";
+        alert(`Withdraw request of ৳${amount} submitted via ${method}!`);
+        window.location.reload();
       } catch (err) {
-        console.error(err);
-        alert("Failed to submit withdraw request.");
+        alert("Error: " + err.message);
       }
-    }
+    };
 
-    function logout() {
-      signOut(auth).then(() => {
-        window.location.href = "login.html";
-      });
-    }
+    window.logout = async function () {
+      await signOut(auth);
+      window.location.href = "login.html";
+    };
+
+    window.copyReferCode = function () {
+      const input = document.getElementById("userReferCode");
+      input.select();
+      input.setSelectionRange(0, 99999);
+      navigator.clipboard.writeText(input.value).then(() => alert("Refer code copied!"));
+    };
   </script>
 </body>
 </html>
