@@ -67,8 +67,7 @@
       projectId: "bdwork-346d3",
       storageBucket: "bdwork-346d3.appspot.com",
       messagingSenderId: "900963179093",
-      appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
-      measurementId: "G-FM1YJ8E5GK"
+      appId: "1:900963179093:web:81e42d67bb31d603cc92dc"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -107,7 +106,9 @@
               <td class="p-3 border border-gray-300">${wd.method || "N/A"}</td>
               <td class="p-3 border border-gray-300">${wd.address || "N/A"}</td>
               <td class="p-3 border border-gray-300">${dateStr}</td>
-              <td class="p-3 border border-gray-300 text-center font-semibold ${status === 'approved' ? 'text-green-600' : status === 'rejected' ? 'text-red-600' : 'text-yellow-600'}">${status.charAt(0).toUpperCase() + status.slice(1)}</td>
+              <td class="p-3 border border-gray-300 text-center font-semibold ${status === 'approved' ? 'text-green-600' : status === 'rejected' ? 'text-red-600' : 'text-yellow-600'}">
+                ${status.charAt(0).toUpperCase() + status.slice(1)}
+              </td>
               <td class="p-3 border border-gray-300 text-center space-x-2">
                 ${status === 'pending' ? `
                   <button data-id="${docSnap.id}" data-action="approved" class="approve-btn bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded">Approve</button>
@@ -128,7 +129,7 @@
         });
 
       } catch (err) {
-        withdrawRequestsBody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-red-600">Error loading withdraw requests: ${err.message}</td></tr>`;
+        withdrawRequestsBody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-red-600">Error: ${err.message}</td></tr>`;
         console.error(err);
       }
     }
@@ -147,12 +148,12 @@
         const wdData = wdDocSnap.data();
 
         if (!wdData.status || wdData.status !== "pending") {
-          alert("This request is already processed.");
+          alert("This request has already been processed.");
           return;
         }
 
         if (!wdData.userId) {
-          alert("Withdraw request is missing user ID.");
+          alert("Withdraw request is missing user ID. Please check the database.");
           return;
         }
 
@@ -160,7 +161,7 @@
         const userDocSnap = await getDoc(userDocRef);
 
         if (!userDocSnap.exists()) {
-          alert("User data not found.");
+          alert("User not found.");
           return;
         }
 
@@ -179,7 +180,7 @@
         await loadWithdrawRequests();
 
       } catch (err) {
-        alert("Error processing withdraw request: " + err.message);
+        alert("Error: " + err.message);
         console.error(err);
       }
     }
