@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin: Pro Account Settings</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6 font-sans">
+
+  <main class="max-w-xl mx-auto bg-white p-6 rounded shadow">
+    <h1 class="text-2xl font-bold mb-6">Pro Account Settings</h1>
+
+    <form id="proSettingsForm" class="space-y-4">
+      <div>
+        <label for="dailyBonus" class="block mb-1 font-semibold">Daily Bonus (৳)</label>
+        <input
+          type="number"
+          id="dailyBonus"
+          min="0"
+          class="w-full border border-gray-300 rounded px-3 py-2"
+          required
+        />
+      </div>
+
+      <div>
+        <label for="activationCost" class="block mb-1 font-semibold">Activation Cost (৳)</label>
+        <input
+          type="number"
+          id="activationCost"
+          min="0"
+          class="w-full border border-gray-300 rounded px-3 py-2"
+          required
+        />
+      </div>
+
+      <div class="flex items-center gap-3">
+        <input type="checkbox" id="active" class="w-5 h-5" />
+        <label for="active" class="font-semibold">Pro Account Active</label>
+      </div>
+
+      <button
+        type="submit"
+        class="bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700 transition"
+      >
+        Save Settings
+      </button>
+    </form>
+
+    <p id="statusMsg" class="mt-4 text-center font-semibold"></p>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // Firebase config — তোমার নিজের কনফিগ বসাও এখানে:
+    const firebaseConfig = {
+      apiKey: "AIzaSyCkYWvYNsg2-CR88Js6gcP2nXfvwI4TW30",
+      authDomain: "bdwork-346d3.firebaseapp.com",
+      projectId: "bdwork-346d3",
+      storageBucket: "bdwork-346d3.appspot.com",
+      messagingSenderId: "900963179093",
+      appId: "1:900963179093:web:81e42d67bb31d603cc92dc",
+      measurementId: "G-FM1YJ8E5GK"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const form = document.getElementById("proSettingsForm");
+    const dailyBonusInput = document.getElementById("dailyBonus");
+    const activationCostInput = document.getElementById("activationCost");
+    const activeCheckbox = document.getElementById("active");
+    const statusMsg = document.getElementById("statusMsg");
+
+    const proSettingsRef = doc(db, "settings", "proAccount");
+
+    // Load current settings on page load
+    async function loadSettings() {
+      try {
+        const snap = await getDoc(proSettingsRef);
+        if (snap.exists()) {
+          const data = snap.data();
+          dailyBonusInput.value = data.dailyBonus ?? 30;
+          activationCostInput.value = data.activationCost ?? 10;
+          activeCheckbox.checked = data.active ?? true;
+          statusMsg.innerText = "Settings loaded.";
+          statusMsg.className = "text-green-600 mt-4 text-center font-semibold";
+        } else {
+          statusMsg.innerText = "Settings document does not exist.";
+          statusMsg.className = "text-red-600 mt-4 text-center font-semibold";
+        }
+      } catch (err) {
+        statusMsg.innerText = "Failed to load settings: " + err.message;
+        statusMsg.className = "text-red-600 mt-4 text-center font-semibold";
+      }
+    }
+
+    // Save settings on form submit
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      statusMsg.innerText = "Saving...";
+      statusMsg.className = "text-blue-600 mt-4 text-center font-semibold";
+
+      const dailyBonus = parseInt(dailyBonusInput.value, 10);
+      const activationCost = parseInt(activationCostInput.value, 10);
+      const active = activeCheckbox.checked;
+
+      if (isNaN(dailyBonus) || dailyBonus < 0) {
+        alert("Daily Bonus must be a non-negative number");
+        return;
+      }
+      if (isNaN(activationCost) || activationCost < 0) {
+        alert("Activation Cost must be a non-negative number");
+        return;
+      }
+
+      try {
+        await updateDoc(proSettingsRef, {
+          dailyBonus,
+          activationCost,
+          active,
+        });
+        statusMsg.innerText = "Settings saved successfully.";
+        statusMsg.className = "text-green-600 mt-4 text-center font-semibold";
+      } catch (err) {
+        statusMsg.innerText = "Failed to save settings: " + err.message;
+        statusMsg.className = "text-red-600 mt-4 text-center font-semibold";
+      }
+    });
+
+    loadSettings();
+  </script>
+</body>
+</html>
