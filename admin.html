@@ -266,12 +266,12 @@
         if (docSnap.exists()) {
           const data = docSnap.data();
           dailyBonusInput.value = data.dailyBonus ?? 0;
-          validityDaysInput.value = data.validityDays ?? 30;
+          validityDaysInput.value = data.validityDays ?? 30; // Default to 30 if not set
           activeStatusSelect.value = data.active ? "true" : "false";
           activationCostInput.value = data.activationCost ?? 0;
         } else {
           dailyBonusInput.value = 0;
-          validityDaysInput.value = 30; // default 30 days
+          validityDaysInput.value = 30; // Default validity
           activeStatusSelect.value = "false";
           activationCostInput.value = 0;
         }
@@ -294,7 +294,7 @@
         isNaN(validityDays) || validityDays < 1 ||
         isNaN(activationCost) || activationCost < 0
       ) {
-        alert("Please enter valid non-negative numbers (Validity must be at least 1 day).");
+        alert("Please enter valid non-negative numbers. Validity must be at least 1 day.");
         return;
       }
 
